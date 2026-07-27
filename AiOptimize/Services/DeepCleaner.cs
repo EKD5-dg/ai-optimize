@@ -4,6 +4,16 @@ using AiOptimize.Models;
 
 namespace AiOptimize.Services;
 
+public enum BrowserCleanAction
+{
+    /// <summary>未运行，直接清理</summary>
+    Clean,
+    /// <summary>仅后台驻留（无窗口），先结束进程再清理</summary>
+    CloseBackgroundThenClean,
+    /// <summary>有窗口正在使用，跳过</summary>
+    Skip,
+}
+
 /// <summary>深度垃圾清理：浏览器缓存、更新缓存、缩略图、错误报告、预读文件。</summary>
 public sealed class DeepCleaner
 {
@@ -40,13 +50,28 @@ public sealed class DeepCleaner
         var result = new CleanResult();
         foreach (var browser in Browsers)
         {
-            if (Process.GetProcessesByName(browser.ProcessName).Length > 0)
+            var processes = Process.GetProcessesByName(browser.ProcessName);
+            bool anyWindow = processes.Any(p => { try { return p.MainWindowHandle != IntPtr.Zero; } catch { return false; } });
+            var action = DecideBrowserAction(processes.Length > 0, anyWindow);
+
+            switch (action)
             {
-                result.Notes.Add($"{browser.DisplayName} 正在运行，已跳过其缓存");
-                continue;
+                case BrowserCleanAction.Skip:
+                    result.Notes.Add($"{browser.DisplayName} 正在使用中，已跳过其缓存（关闭浏览器后可清理）");
+                    break;
+                case BrowserCleanAction.CloseBackgroundThenClean:
+                    CloseProcesses(processes);
+                    foreach (var cacheDir in GetBrowserCacheDirs(browser))
+                        FileCleanupHelper.DeleteDirectoryContents(cacheDir, result);
+                    result.Notes.Add($"已结束 {browser.DisplayName} 后台驻留进程并清理其缓存");
+                    break;
+                default:
+                    foreach (var cacheDir in GetBrowserCacheDirs(browser))
+                        FileCleanupHelper.DeleteDirectoryContents(cacheDir, result);
+                    break;
             }
-            foreach (var cacheDir in GetBrowserCacheDirs(browser))
-                FileCleanupHelper.DeleteDirectoryContents(cacheDir, result);
+
+            foreach (var p in processes) p.Dispose();
         }
 
         FileCleanupHelper.DeleteDirectoryContents(Path.Combine(WindowsDir, "SoftwareDistribution", "Download"), result);
@@ -56,6 +81,25 @@ public sealed class DeepCleaner
         FileCleanupHelper.DeleteFiles(Path.Combine(WindowsDir, "Prefetch"), "*.pf", result);
         return result;
     });
+
+    /// <summary>浏览器缓存清理策略：有窗口=跳过；仅后台驻留=先结束再清；未运行=直接清。</summary>
+    public static BrowserCleanAction DecideBrowserAction(bool anyProcess, bool anyWindow)
+    {
+        if (!anyProcess) return BrowserCleanAction.Clean;
+        return anyWindow ? BrowserCleanAction.Skip : BrowserCleanAction.CloseBackgroundThenClean;
+    }
+
+    private static void CloseProcesses(Process[] processes)
+    {
+        foreach (var p in processes)
+        {
+            try { p.Kill(); } catch { }
+        }
+        foreach (var p in processes)
+        {
+            try { p.WaitForExit(3000); } catch { }
+        }
+    }
 
     private static IEnumerable<string> GetBrowserCacheDirs(BrowserTarget browser)
     {
