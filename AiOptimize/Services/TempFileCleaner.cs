@@ -8,14 +8,18 @@ namespace AiOptimize.Services;
 /// <summary>临时文件清理：用户临时目录、Windows\Temp、回收站。</summary>
 public sealed class TempFileCleaner
 {
-    private static readonly string[] TargetDirectories =
-    {
-        Path.GetTempPath(),
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp"),
-    };
+    private static readonly string UserTempDir = Path.GetTempPath();
+    private static readonly string WindowsTempDir =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
 
-    public Task<long> ScanAsync() => Task.Run(() =>
-        TargetDirectories.Sum(FileCleanupHelper.GetDirectorySize) + GetRecycleBinSize());
+    private static readonly string[] TargetDirectories = { UserTempDir, WindowsTempDir };
+
+    public Task<IReadOnlyList<ScanItem>> ScanDetailsAsync() => Task.Run<IReadOnlyList<ScanItem>>(() => new List<ScanItem>
+    {
+        new("用户临时文件", FileCleanupHelper.GetDirectorySize(UserTempDir)),
+        new("系统临时文件", FileCleanupHelper.GetDirectorySize(WindowsTempDir)),
+        new("回收站", GetRecycleBinSize()),
+    });
 
     public Task<CleanResult> CleanAsync() => Task.Run(() =>
     {

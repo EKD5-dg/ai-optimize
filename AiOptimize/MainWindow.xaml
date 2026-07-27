@@ -85,37 +85,79 @@
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <Border Style="{StaticResource Card}" Margin="0,4">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <CheckBox IsChecked="{Binding IsTempSelected}" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="1" Margin="12,0">
-                            <TextBlock Text="临时文件清理" FontSize="15" FontWeight="SemiBold"/>
-                            <TextBlock Text="清理系统/用户临时目录与回收站" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
-                        </StackPanel>
-                        <TextBlock Grid.Column="2" Text="{Binding TempScanText}"
-                                   Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
-                    </Grid>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox IsChecked="{Binding IsTempSelected}" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Margin="12,0">
+                                <TextBlock Text="临时文件清理" FontSize="15" FontWeight="SemiBold"/>
+                                <TextBlock Text="清理系统/用户临时目录与回收站" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="{Binding TempScanText}"
+                                       Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                            <ToggleButton Grid.Column="3" x:Name="TempDetailToggle" Content="明细"
+                                          Style="{StaticResource LinkToggle}" Margin="14,0,0,0"/>
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding TempDetails}" Margin="30,10,4,0"
+                                      Visibility="{Binding IsChecked, ElementName=TempDetailToggle, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Name}" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Bytes, Converter={StaticResource BytesToText}}"
+                                                   Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource Card}" Margin="0,4">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <CheckBox IsChecked="{Binding IsDeepSelected}" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="1" Margin="12,0">
-                            <TextBlock Text="深度垃圾清理" FontSize="15" FontWeight="SemiBold"/>
-                            <TextBlock Text="浏览器缓存、系统更新缓存、缩略图、错误报告等" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
-                        </StackPanel>
-                        <TextBlock Grid.Column="2" Text="{Binding DeepScanText}"
-                                   Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
-                    </Grid>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox IsChecked="{Binding IsDeepSelected}" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Margin="12,0">
+                                <TextBlock Text="深度垃圾清理" FontSize="15" FontWeight="SemiBold"/>
+                                <TextBlock Text="浏览器缓存、系统更新缓存、缩略图、错误报告等" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="{Binding DeepScanText}"
+                                       Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                            <ToggleButton Grid.Column="3" x:Name="DeepDetailToggle" Content="明细"
+                                          Style="{StaticResource LinkToggle}" Margin="14,0,0,0"/>
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding DeepDetails}" Margin="30,10,4,0"
+                                      Visibility="{Binding IsChecked, ElementName=DeepDetailToggle, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Name}" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Bytes, Converter={StaticResource BytesToText}}"
+                                                   Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource Card}" Margin="0,4">

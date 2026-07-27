@@ -29,20 +29,24 @@ public sealed class DeepCleaner
         new("Edge", "msedge", Path.Combine(LocalAppData, "Microsoft", "Edge", "User Data")),
     };
 
-    public Task<long> ScanAsync() => Task.Run(() =>
+    public Task<IReadOnlyList<ScanItem>> ScanDetailsAsync() => Task.Run<IReadOnlyList<ScanItem>>(() =>
     {
-        long size = 0;
+        var items = new List<ScanItem>();
         foreach (var browser in Browsers)
         {
-            foreach (var cacheDir in GetBrowserCacheDirs(browser))
-                size += FileCleanupHelper.GetDirectorySize(cacheDir);
+            long size = GetBrowserCacheDirs(browser).Sum(FileCleanupHelper.GetDirectorySize);
+            items.Add(new($"{browser.DisplayName} 浏览器缓存", size));
         }
-        size += FileCleanupHelper.GetDirectorySize(Path.Combine(WindowsDir, "SoftwareDistribution", "Download"));
-        size += FileCleanupHelper.GetFilesSize(Path.Combine(LocalAppData, @"Microsoft\Windows\Explorer"), "thumbcache_*.db");
-        size += FileCleanupHelper.GetDirectorySize(Path.Combine(ProgramData, @"Microsoft\Windows\WER\ReportQueue"));
-        size += FileCleanupHelper.GetDirectorySize(Path.Combine(ProgramData, @"Microsoft\Windows\WER\ReportArchive"));
-        size += FileCleanupHelper.GetFilesSize(Path.Combine(WindowsDir, "Prefetch"), "*.pf");
-        return size;
+        items.Add(new("Windows 更新缓存",
+            FileCleanupHelper.GetDirectorySize(Path.Combine(WindowsDir, "SoftwareDistribution", "Download"))));
+        items.Add(new("缩略图缓存",
+            FileCleanupHelper.GetFilesSize(Path.Combine(LocalAppData, @"Microsoft\Windows\Explorer"), "thumbcache_*.db")));
+        items.Add(new("系统错误报告",
+            FileCleanupHelper.GetDirectorySize(Path.Combine(ProgramData, @"Microsoft\Windows\WER\ReportQueue"))
+            + FileCleanupHelper.GetDirectorySize(Path.Combine(ProgramData, @"Microsoft\Windows\WER\ReportArchive"))));
+        items.Add(new("预读文件",
+            FileCleanupHelper.GetFilesSize(Path.Combine(WindowsDir, "Prefetch"), "*.pf")));
+        return items;
     });
 
     public Task<CleanResult> CleanAsync() => Task.Run(() =>

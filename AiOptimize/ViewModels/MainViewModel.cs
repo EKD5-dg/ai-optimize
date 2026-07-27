@@ -40,6 +40,12 @@ public sealed class MainViewModel : ViewModelBase
     private string _deepScanText = "扫描中…";
     public string DeepScanText { get => _deepScanText; set => SetProperty(ref _deepScanText, value); }
 
+    private IReadOnlyList<ScanItem> _tempDetails = Array.Empty<ScanItem>();
+    public IReadOnlyList<ScanItem> TempDetails { get => _tempDetails; set => SetProperty(ref _tempDetails, value); }
+
+    private IReadOnlyList<ScanItem> _deepDetails = Array.Empty<ScanItem>();
+    public IReadOnlyList<ScanItem> DeepDetails { get => _deepDetails; set => SetProperty(ref _deepDetails, value); }
+
     private string _memoryInfoText = "";
     public string MemoryInfoText { get => _memoryInfoText; set => SetProperty(ref _memoryInfoText, value); }
 
@@ -96,11 +102,13 @@ public sealed class MainViewModel : ViewModelBase
         TempScanText = "扫描中…";
         DeepScanText = "扫描中…";
 
-        long tempSize = await _tempCleaner.ScanAsync();
-        TempScanText = $"可清理 {ByteFormatter.Format(tempSize)}";
+        var tempDetails = await _tempCleaner.ScanDetailsAsync();
+        TempDetails = tempDetails;
+        TempScanText = $"可清理 {ByteFormatter.Format(tempDetails.Sum(d => d.Bytes))}";
 
-        long deepSize = await _deepCleaner.ScanAsync();
-        DeepScanText = $"可清理 {ByteFormatter.Format(deepSize)}";
+        var deepDetails = await _deepCleaner.ScanDetailsAsync();
+        DeepDetails = deepDetails;
+        DeepScanText = $"可清理 {ByteFormatter.Format(deepDetails.Sum(d => d.Bytes))}";
 
         await Task.Run(RefreshStartupCount);
     }
