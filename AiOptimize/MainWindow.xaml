@@ -1,12 +1,171 @@
 ﻿<Window x:Class="AiOptimize.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:AiOptimize"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        xmlns:controls="clr-namespace:AiOptimize.Controls"
+        Title="AI 电脑优化助手"
+        Height="800" Width="940" MinHeight="680" MinWidth="840"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="Microsoft YaHei UI">
+    <Grid Margin="24,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
+        <TextBlock Text="AI 电脑优化助手" FontSize="22" FontWeight="Bold" Margin="4,0,0,16"/>
+
+        <!-- 实时监控区 -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="1.4*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,12,0">
+                <StackPanel>
+                    <TextBlock Text="CPU 使用率" Foreground="{StaticResource SubTextBrush}"/>
+                    <Grid Width="120" Height="120" Margin="0,14,0,0">
+                        <controls:RingProgress Value="{Binding CpuUsage}" RingBrush="{StaticResource AccentBrush}"/>
+                        <TextBlock Text="{Binding CpuUsage, StringFormat={}{0:0}%}" FontSize="24" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1" Style="{StaticResource Card}" Margin="0,0,12,0">
+                <StackPanel>
+                    <TextBlock Text="内存使用率" Foreground="{StaticResource SubTextBrush}"/>
+                    <Grid Width="120" Height="120" Margin="0,14,0,0">
+                        <controls:RingProgress Value="{Binding MemoryUsage}" RingBrush="{StaticResource PurpleBrush}"/>
+                        <TextBlock Text="{Binding MemoryUsage, StringFormat={}{0:0}%}" FontSize="24" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                    <TextBlock Text="{Binding MemoryText}" Foreground="{StaticResource SubTextBrush}" FontSize="11"
+                               HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="磁盘使用率" Foreground="{StaticResource SubTextBrush}"/>
+                    <ItemsControl ItemsSource="{Binding Disks}" Margin="0,10,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,7">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="34"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    <ProgressBar Grid.Column="1" Height="10" Margin="8,0" Maximum="100"
+                                                 Value="{Binding Usage, Mode=OneWay}"
+                                                 Style="{StaticResource SlimProgressBar}"
+                                                 Foreground="{Binding Usage, Converter={StaticResource UsageToBrush}}"
+                                                 VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Foreground="{StaticResource SubTextBrush}"
+                                               FontSize="11" VerticalAlignment="Center"><Run
+                                            Text="{Binding UsedBytes, Mode=OneWay, Converter={StaticResource BytesToText}}"/><Run
+                                            Text=" / "/><Run
+                                            Text="{Binding TotalBytes, Mode=OneWay, Converter={StaticResource BytesToText}}"/></TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 优化项列表 -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox IsChecked="{Binding IsTempSelected}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Margin="12,0">
+                            <TextBlock Text="临时文件清理" FontSize="15" FontWeight="SemiBold"/>
+                            <TextBlock Text="清理系统/用户临时目录与回收站" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="{Binding TempScanText}"
+                                   Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox IsChecked="{Binding IsDeepSelected}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Margin="12,0">
+                            <TextBlock Text="深度垃圾清理" FontSize="15" FontWeight="SemiBold"/>
+                            <TextBlock Text="浏览器缓存、系统更新缓存、缩略图、错误报告等" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="{Binding DeepScanText}"
+                                   Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox IsChecked="{Binding IsMemorySelected}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Margin="12,0">
+                            <TextBlock Text="内存释放" FontSize="15" FontWeight="SemiBold"/>
+                            <TextBlock Text="压缩进程工作集并清空系统待机内存" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="{Binding MemoryInfoText}"
+                                   Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="30,0,12,0">
+                            <TextBlock Text="启动项管理" FontSize="15" FontWeight="SemiBold"/>
+                            <TextBlock Text="查看并控制开机自动启动的程序" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding StartupCountText}"
+                                   Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <Button Grid.Column="2" Content="管理" Width="88" Height="34"
+                                Style="{StaticResource AccentButton}" Click="OnManageStartupClick"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 底部操作区 -->
+        <StackPanel Grid.Row="3" Margin="0,12,0,0">
+            <ProgressBar Height="8" Maximum="100" Value="{Binding ProgressValue}"
+                         Style="{StaticResource SlimProgressBar}" Foreground="{StaticResource PurpleBrush}"
+                         Visibility="{Binding IsOptimizing, Converter={StaticResource BoolToVis}}"/>
+            <TextBlock Text="{Binding ProgressText}" Foreground="{StaticResource SubTextBrush}"
+                       HorizontalAlignment="Center" Margin="0,6,0,0"/>
+            <TextBlock Text="{Binding ResultText}" Foreground="{StaticResource SuccessBrush}"
+                       HorizontalAlignment="Center" Margin="0,4,0,8" TextWrapping="Wrap" TextAlignment="Center"/>
+            <Button Content="一键优化" Height="52" FontSize="18"
+                    Style="{StaticResource AccentButton}" Command="{Binding OptimizeCommand}"/>
+        </StackPanel>
     </Grid>
 </Window>

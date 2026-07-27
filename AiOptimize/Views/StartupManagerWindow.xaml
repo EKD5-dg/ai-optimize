@@ -1,0 +1,51 @@
+<Window x:Class="AiOptimize.Views.StartupManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="启动项管理"
+        Height="540" Width="700" MinHeight="380" MinWidth="560"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BgBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="Microsoft YaHei UI">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="开机自启动项" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Items}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Margin="0,4" Padding="14,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding Command}" Foreground="{StaticResource SubTextBrush}"
+                                               FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" Text="{Binding SourceDisplay}"
+                                           Foreground="{StaticResource SubTextBrush}" FontSize="11"
+                                           VerticalAlignment="Center" Margin="12,0"/>
+                                <ToggleButton Grid.Column="2" Style="{StaticResource ToggleSwitch}"
+                                              IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                              VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <TextBlock Grid.Row="2" Margin="0,10,0,0" Foreground="{StaticResource SubTextBrush}" FontSize="11"
+                   Text="提示：禁用不会删除程序，仅阻止其开机自动启动，可随时重新开启。"/>
+    </Grid>
+</Window>
