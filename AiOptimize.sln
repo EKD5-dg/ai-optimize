@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiOptimize", "AiOptimize\AiOptimize.csproj", "{0DEE82B8-3A6A-4D08-A267-BD650F103A4A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiOptimize.Tests", "AiOptimize.Tests\AiOptimize.Tests.csproj", "{BED537B5-427A-45D5-B590-A7C900D182B1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0DEE82B8-3A6A-4D08-A267-BD650F103A4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DEE82B8-3A6A-4D08-A267-BD650F103A4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DEE82B8-3A6A-4D08-A267-BD650F103A4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DEE82B8-3A6A-4D08-A267-BD650F103A4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BED537B5-427A-45D5-B590-A7C900D182B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BED537B5-427A-45D5-B590-A7C900D182B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BED537B5-427A-45D5-B590-A7C900D182B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BED537B5-427A-45D5-B590-A7C900D182B1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
