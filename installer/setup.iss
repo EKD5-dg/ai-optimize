@@ -15,6 +15,8 @@ PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 WizardStyle=modern
+SetupIconFile=..\AiOptimize\app.ico
+UninstallDisplayIcon={app}\AiOptimize.exe
 UninstallDisplayName=AI 电脑优化助手
 
 [Tasks]
