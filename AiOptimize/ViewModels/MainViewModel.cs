@@ -46,6 +46,9 @@ public sealed class MainViewModel : ViewModelBase
     private IReadOnlyList<ScanItem> _deepDetails = Array.Empty<ScanItem>();
     public IReadOnlyList<ScanItem> DeepDetails { get => _deepDetails; set => SetProperty(ref _deepDetails, value); }
 
+    private IReadOnlyList<ScanItem> _memoryDetails = Array.Empty<ScanItem>();
+    public IReadOnlyList<ScanItem> MemoryDetails { get => _memoryDetails; set => SetProperty(ref _memoryDetails, value); }
+
     private string _memoryInfoText = "";
     public string MemoryInfoText { get => _memoryInfoText; set => SetProperty(ref _memoryInfoText, value); }
 
@@ -109,6 +112,8 @@ public sealed class MainViewModel : ViewModelBase
         var deepDetails = await _deepCleaner.ScanDetailsAsync();
         DeepDetails = deepDetails;
         DeepScanText = $"可清理 {ByteFormatter.Format(deepDetails.Sum(d => d.Bytes))}";
+
+        MemoryDetails = await _memoryOptimizer.ScanDetailsAsync();
 
         await Task.Run(RefreshStartupCount);
     }

@@ -161,20 +161,44 @@
                 </Border>
 
                 <Border Style="{StaticResource Card}" Margin="0,4">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <CheckBox IsChecked="{Binding IsMemorySelected}" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="1" Margin="12,0">
-                            <TextBlock Text="内存释放" FontSize="15" FontWeight="SemiBold"/>
-                            <TextBlock Text="压缩进程工作集并清空系统待机内存" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox IsChecked="{Binding IsMemorySelected}" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Margin="12,0">
+                                <TextBlock Text="内存释放" FontSize="15" FontWeight="SemiBold"/>
+                                <TextBlock Text="压缩进程工作集并清空系统待机内存" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="{Binding MemoryInfoText}"
+                                       Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                            <ToggleButton Grid.Column="3" x:Name="MemoryDetailToggle" Content="明细"
+                                          Style="{StaticResource LinkToggle}" Margin="14,0,0,0"/>
+                        </Grid>
+                        <StackPanel Margin="30,10,4,0"
+                                    Visibility="{Binding IsChecked, ElementName=MemoryDetailToggle, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="当前最占内存的程序：" Foreground="{StaticResource SubTextBrush}" FontSize="12" Margin="0,0,0,4"/>
+                            <ItemsControl ItemsSource="{Binding MemoryDetails}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Name}" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Bytes, Converter={StaticResource BytesToText}}"
+                                                       Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
-                        <TextBlock Grid.Column="2" Text="{Binding MemoryInfoText}"
-                                   Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
-                    </Grid>
+                    </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource Card}" Margin="0,4">

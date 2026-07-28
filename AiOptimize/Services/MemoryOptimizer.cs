@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using AiOptimize.Models;
 using AiOptimize.Native;
 
 namespace AiOptimize.Services;
@@ -8,6 +9,28 @@ public sealed record MemoryOptimizeResult(double BeforeUsage, double AfterUsage,
 /// <summary>内存释放：压缩各进程工作集 + 清空系统待机内存列表。</summary>
 public sealed class MemoryOptimizer
 {
+    /// <summary>扫描当前最占内存的进程（同名合并）。</summary>
+    public Task<IReadOnlyList<ScanItem>> ScanDetailsAsync(int top = 8) => Task.Run<IReadOnlyList<ScanItem>>(() =>
+    {
+        var entries = new List<(string Name, long Bytes)>();
+        foreach (var process in Process.GetProcesses())
+        {
+            try { entries.Add((process.ProcessName, process.WorkingSet64)); }
+            catch { }
+            finally { process.Dispose(); }
+        }
+        return SummarizeProcesses(entries, top);
+    });
+
+    /// <summary>按进程名合并内存占用，降序取前 top 项；多进程时名称标注 ×N。</summary>
+    public static List<ScanItem> SummarizeProcesses(IEnumerable<(string Name, long Bytes)> processes, int top)
+        => processes
+            .GroupBy(p => p.Name)
+            .Select(g => new ScanItem(g.Count() > 1 ? $"{g.Key} ×{g.Count()}" : g.Key, g.Sum(p => p.Bytes)))
+            .OrderByDescending(item => item.Bytes)
+            .Take(top)
+            .ToList();
+
     public Task<MemoryOptimizeResult> OptimizeAsync() => Task.Run(() =>
     {
         var before = ReadMemory();
