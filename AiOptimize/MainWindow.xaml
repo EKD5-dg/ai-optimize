@@ -70,8 +70,9 @@
                                                  VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="2" Foreground="{StaticResource SubTextBrush}"
                                                FontSize="11" VerticalAlignment="Center"><Run
-                                            Text="{Binding UsedBytes, Mode=OneWay, Converter={StaticResource BytesToText}}"/><Run
-                                            Text=" / "/><Run
+                                            Text="剩余 "/><Run
+                                            Text="{Binding FreeBytes, Mode=OneWay, Converter={StaticResource BytesToText}}" Foreground="{StaticResource SuccessBrush}"/><Run
+                                            Text=" / 共 "/><Run
                                             Text="{Binding TotalBytes, Mode=OneWay, Converter={StaticResource BytesToText}}"/></TextBlock>
                                 </Grid>
                             </DataTemplate>

@@ -2,6 +2,8 @@ namespace AiOptimize.Models;
 
 public sealed record DiskUsageInfo(string Name, long UsedBytes, long TotalBytes)
 {
+    public long FreeBytes => TotalBytes - UsedBytes;
+
     public double Usage => TotalBytes == 0 ? 0 : UsedBytes * 100.0 / TotalBytes;
 }
 
