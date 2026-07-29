@@ -2,13 +2,13 @@
 [Setup]
 AppId={{B7E5D3A1-6C2F-4E8A-9D4B-1F2A3C4D5E6F}
 AppName=AI 电脑优化助手
-AppVersion=1.2.3
+AppVersion=1.2.4
 AppPublisher=macan
 DefaultDirName={autopf}\AiOptimize
 DefaultGroupName=AI 电脑优化助手
 DisableProgramGroupPage=yes
 OutputDir=..\dist
-OutputBaseFilename=AI电脑优化助手安装程序_v1.2.3
+OutputBaseFilename=AI电脑优化助手安装程序_v1.2.4
 Compression=lzma2/max
 SolidCompression=yes
 PrivilegesRequired=admin

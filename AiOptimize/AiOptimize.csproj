@@ -7,7 +7,7 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyTitle>AI 电脑优化助手</AssemblyTitle>
-    <Version>1.2.3</Version>
+    <Version>1.2.4</Version>
     <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>

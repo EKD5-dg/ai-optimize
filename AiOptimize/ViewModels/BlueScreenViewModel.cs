@@ -58,14 +58,26 @@ public sealed class QuickActionViewModel
         {
             try
             {
-                if (type == QuickActionType.DiskCheck)
+                var owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
+                switch (type)
                 {
-                    // 磁盘检查用程序自己的友好窗口，而非命令行
-                    var owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
-                    new DiskCheckWindow { Owner = owner }.ShowDialog();
-                    return;
+                    case QuickActionType.DiskCheck:
+                        // 磁盘检查用程序自己的友好窗口，而非命令行
+                        new DiskCheckWindow { Owner = owner }.ShowDialog();
+                        return;
+                    case QuickActionType.SfcScan:
+                        new SfcCheckWindow { Owner = owner }.ShowDialog();
+                        return;
+                    case QuickActionType.MemoryDiagnostic:
+                        MessageBox.Show(
+                            "即将打开 Windows 内存诊断。\n\n它会问你“立即重启检查”还是“下次开机时检查”：\n• 检查在开机前的蓝色界面进行，大约 10-20 分钟，完成后自动进入系统；\n• 请先保存好正在编辑的文件再选“立即重启”。",
+                            "内存诊断说明", MessageBoxButton.OK, MessageBoxImage.Information);
+                        QuickActionCatalog.Launch(type);
+                        return;
+                    default:
+                        QuickActionCatalog.Launch(type);
+                        return;
                 }
-                QuickActionCatalog.Launch(type);
             }
             catch (Exception ex)
             {
