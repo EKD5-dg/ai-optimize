@@ -36,7 +36,8 @@ public sealed class BlueScreenAnalyzer
                             info.Name,
                             info.Cause,
                             info.Advice,
-                            dumpPath));
+                            dumpPath,
+                            info.Actions));
                     }
                     catch { /* 单条解析失败跳过 */ }
                 }
