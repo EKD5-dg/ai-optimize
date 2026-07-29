@@ -73,6 +73,14 @@
 
                 <Border Style="{StaticResource Card}" Margin="0,4">
                     <StackPanel>
+                        <TextBlock Style="{StaticResource HelpTitle}" Text="📂 大文件查找"/>
+                        <TextBlock Style="{StaticResource HelpText}"
+                                   Text="缓存清理释放的空间有限，真正占地方的往往是大文件。点「扫描」找出最大的 50 个文件（100 MB 以上），可以先「打开位置」确认是什么，不需要的再点「删除」。删除的文件进入回收站，后悔了可以恢复；确认不要后清空回收站才真正释放空间。"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <StackPanel>
                         <TextBlock Style="{StaticResource HelpTitle}" Text="❓ 常见问题"/>
                         <TextBlock Style="{StaticResource HelpText}"
                                    Text="• 每次打开程序都弹出深色确认框？这是 Windows 的权限确认（UAC），因为清理系统垃圾需要管理员权限，点「是」即可，属正常现象。&#x0a;• 清理会不会误删我的文件？不会。本程序只清理系统公认的缓存和临时文件位置，你的文档、照片、微信/QQ 聊天记录、桌面文件等个人数据完全不受影响。&#x0a;• 正在使用的文件会被自动跳过，不会强行删除。"/>

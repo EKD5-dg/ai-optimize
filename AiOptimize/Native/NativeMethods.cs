@@ -49,6 +49,28 @@ internal static class NativeMethods
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     internal static extern int SHQueryRecycleBin(string? pszRootPath, ref SHQUERYRBINFO pSHQueryRBInfo);
 
+    // ---- 删除到回收站 ----
+    internal const uint FO_DELETE = 3;
+    internal const ushort FOF_ALLOWUNDO = 0x40;
+    internal const ushort FOF_NOCONFIRMATION = 0x10;
+    internal const ushort FOF_SILENT = 0x4;
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct SHFILEOPSTRUCT
+    {
+        public IntPtr hwnd;
+        public uint wFunc;
+        public string pFrom;
+        public string? pTo;
+        public ushort fFlags;
+        [MarshalAs(UnmanagedType.Bool)] public bool fAnyOperationsAborted;
+        public IntPtr hNameMappings;
+        public string? lpszProgressTitle;
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    internal static extern int SHFileOperation(ref SHFILEOPSTRUCT lpFileOp);
+
     // ---- 待机内存列表清理 ----
     internal const int SystemMemoryListInformation = 80;
     internal const int MemoryPurgeStandbyList = 4;

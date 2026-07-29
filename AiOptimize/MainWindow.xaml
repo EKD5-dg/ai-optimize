@@ -245,6 +245,21 @@
                                 Style="{StaticResource AccentButton}" Click="OnBlueScreenClick"/>
                     </Grid>
                 </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="30,0,12,0">
+                            <TextBlock Text="大文件查找" FontSize="15" FontWeight="SemiBold"/>
+                            <TextBlock Text="找出最占空间的大文件，删除进回收站可恢复" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="扫描" Width="88" Height="34"
+                                Style="{StaticResource AccentButton}" Click="OnBigFilesClick"/>
+                    </Grid>
+                </Border>
             </StackPanel>
         </ScrollViewer>
 

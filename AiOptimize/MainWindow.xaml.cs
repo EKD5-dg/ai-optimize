@@ -33,6 +33,12 @@ public partial class MainWindow : Window
         window.ShowDialog();
     }
 
+    private void OnBigFilesClick(object sender, RoutedEventArgs e)
+    {
+        var window = new BigFilesWindow { Owner = this };
+        window.ShowDialog();
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         _viewModel.Shutdown();
