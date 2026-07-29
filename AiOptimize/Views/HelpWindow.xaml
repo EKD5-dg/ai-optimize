@@ -1,0 +1,84 @@
+<Window x:Class="AiOptimize.Views.HelpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="使用说明"
+        Height="620" Width="640" MinHeight="420" MinWidth="520"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BgBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="Microsoft YaHei UI">
+    <Window.Resources>
+        <Style x:Key="HelpTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+        <Style x:Key="HelpText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="22"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="使用说明" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpTitle}" Text="📊 顶部监控卡片"/>
+                        <TextBlock Style="{StaticResource HelpText}"
+                                   Text="实时显示 CPU、内存、磁盘的使用情况，每秒自动刷新。磁盘进度条变红表示该分区已用超过 90%，建议尽快清理。"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpTitle}" Text="⚡ 一键优化"/>
+                        <TextBlock Style="{StaticResource HelpText}"
+                                   Text="勾选想执行的项目（默认全选），点击底部「一键优化」大按钮即可。完成后会显示释放了多少空间、内存下降了多少。每个项目右侧的「明细」可以展开查看具体构成。"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpTitle}" Text="🧹 三个清理项分别做什么"/>
+                        <TextBlock Style="{StaticResource HelpText}"
+                                   Text="• 临时文件清理：清空系统/用户临时目录和回收站，完全安全。&#x0a;• 深度垃圾清理：清理浏览器缓存、系统更新缓存、缩略图等。浏览器只在后台驻留时会被自动关闭后清理；如果你正开着浏览器窗口使用，则会跳过它，不影响你上网。&#x0a;• 内存释放：压缩后台程序占用的内存。释放后部分程序切回时可能稍慢一两秒，属正常现象。"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpTitle}" Text="🚀 启动项管理"/>
+                        <TextBlock Style="{StaticResource HelpText}"
+                                   Text="点「管理」查看所有开机自启动的程序，用右侧开关控制。关掉开关只是阻止它开机自动运行，不会删除软件本身，随时可以重新打开。禁用不常用的自启动项能明显加快开机速度。"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpTitle}" Text="💙 蓝屏分析"/>
+                        <TextBlock Style="{StaticResource HelpText}"
+                                   Text="自动读取系统的蓝屏（电脑突然崩溃重启）历史记录，把错误代码翻译成大白话，并告诉你可能的原因。每条记录下方的按钮可以一键执行对应的排查操作，比如「一键磁盘检查」点一下就自动开始检查，不用记任何命令。"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpTitle}" Text="❓ 常见问题"/>
+                        <TextBlock Style="{StaticResource HelpText}"
+                                   Text="• 每次打开程序都弹出深色确认框？这是 Windows 的权限确认（UAC），因为清理系统垃圾需要管理员权限，点「是」即可，属正常现象。&#x0a;• 清理会不会误删我的文件？不会。本程序只清理系统公认的缓存和临时文件位置，你的文档、照片、微信/QQ 聊天记录、桌面文件等个人数据完全不受影响。&#x0a;• 正在使用的文件会被自动跳过，不会强行删除。"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

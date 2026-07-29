@@ -16,7 +16,15 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="AI 电脑优化助手" FontSize="22" FontWeight="Bold" Margin="4,0,0,16"/>
+        <Grid Margin="4,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="AI 电脑优化助手" FontSize="22" FontWeight="Bold"/>
+            <Button Grid.Column="1" Content="❓ 使用说明" Style="{StaticResource LinkButton}"
+                    Click="OnHelpClick" VerticalAlignment="Center" Margin="0,0,4,0"/>
+        </Grid>
 
         <!-- 实时监控区 -->
         <Grid Grid.Row="1" Margin="0,0,0,16">

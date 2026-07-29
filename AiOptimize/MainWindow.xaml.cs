@@ -27,6 +27,12 @@ public partial class MainWindow : Window
         window.ShowDialog();
     }
 
+    private void OnHelpClick(object sender, RoutedEventArgs e)
+    {
+        var window = new HelpWindow { Owner = this };
+        window.ShowDialog();
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         _viewModel.Shutdown();
