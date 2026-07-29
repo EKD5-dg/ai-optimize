@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Media;
 using AiOptimize.Models;
 using AiOptimize.Services;
 using AiOptimize.Utils;
@@ -53,6 +54,7 @@ public sealed class BigFileItemViewModel
     {
         _owner = owner;
         _file = file;
+        Kind = FileKindCatalog.Describe(file.FullPath);
         OpenLocationCommand = new RelayCommand(_ => OpenLocation());
         DeleteCommand = new RelayCommand(_ => Delete());
     }
@@ -60,6 +62,23 @@ public sealed class BigFileItemViewModel
     public string Name => _file.Name;
     public string Directory => _file.Directory;
     public long Bytes => _file.Bytes;
+
+    public FileKindInfo Kind { get; }
+    public string KindDescription => Kind.Description;
+
+    public string RiskLabel => Kind.Risk switch
+    {
+        FileRisk.Safe => "可以删除",
+        FileRisk.Danger => "谨慎删除",
+        _ => "自行判断",
+    };
+
+    public Brush RiskBrush => Kind.Risk switch
+    {
+        FileRisk.Safe => new SolidColorBrush(Color.FromRgb(0x7C, 0xE3, 0x8B)),
+        FileRisk.Danger => new SolidColorBrush(Color.FromRgb(0xEF, 0x53, 0x50)),
+        _ => new SolidColorBrush(Color.FromRgb(0xE8, 0xB4, 0x4C)),
+    };
 
     public RelayCommand OpenLocationCommand { get; }
     public RelayCommand DeleteCommand { get; }
@@ -82,9 +101,13 @@ public sealed class BigFileItemViewModel
 
     private void Delete()
     {
+        string warning = Kind.Risk == FileRisk.Danger
+            ? $"\n\n⚠ 特别提醒：{Kind.Description}！"
+            : $"\n\n文件类型：{Kind.Description}。";
         var confirm = MessageBox.Show(
-            $"确定把这个文件放入回收站吗？\n\n{_file.Name}（{ByteFormatter.Format(_file.Bytes)}）\n位置：{_file.Directory}\n\n放入回收站后仍可恢复；清空回收站后才会真正释放空间。",
-            "删除确认", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            $"确定把这个文件放入回收站吗？\n\n{_file.Name}（{ByteFormatter.Format(_file.Bytes)}）\n位置：{_file.Directory}{warning}\n\n放入回收站后仍可恢复；清空回收站后才会真正释放空间。",
+            "删除确认", MessageBoxButton.YesNo,
+            Kind.Risk == FileRisk.Danger ? MessageBoxImage.Warning : MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes) return;
 
         try
