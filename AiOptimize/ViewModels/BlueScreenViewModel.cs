@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using AiOptimize.Models;
 using AiOptimize.Services;
+using AiOptimize.Views;
 
 namespace AiOptimize.ViewModels;
 
@@ -57,6 +58,13 @@ public sealed class QuickActionViewModel
         {
             try
             {
+                if (type == QuickActionType.DiskCheck)
+                {
+                    // 磁盘检查用程序自己的友好窗口，而非命令行
+                    var owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
+                    new DiskCheckWindow { Owner = owner }.ShowDialog();
+                    return;
+                }
                 QuickActionCatalog.Launch(type);
             }
             catch (Exception ex)
