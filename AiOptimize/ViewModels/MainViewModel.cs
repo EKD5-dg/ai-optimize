@@ -12,6 +12,7 @@ public sealed class MainViewModel : ViewModelBase
     private readonly DeepCleaner _deepCleaner = new();
     private readonly MemoryOptimizer _memoryOptimizer = new();
     private readonly StartupManager _startupManager = new();
+    private readonly BlueScreenAnalyzer _blueScreenAnalyzer = new();
 
     private double _cpuUsage;
     public double CpuUsage { get => _cpuUsage; set => SetProperty(ref _cpuUsage, value); }
@@ -54,6 +55,9 @@ public sealed class MainViewModel : ViewModelBase
 
     private string _startupCountText = "扫描中…";
     public string StartupCountText { get => _startupCountText; set => SetProperty(ref _startupCountText, value); }
+
+    private string _blueScreenText = "扫描中…";
+    public string BlueScreenText { get => _blueScreenText; set => SetProperty(ref _blueScreenText, value); }
 
     private bool _isOptimizing;
     public bool IsOptimizing { get => _isOptimizing; set => SetProperty(ref _isOptimizing, value); }
@@ -114,6 +118,9 @@ public sealed class MainViewModel : ViewModelBase
         DeepScanText = $"可清理 {ByteFormatter.Format(deepDetails.Sum(d => d.Bytes))}";
 
         MemoryDetails = await _memoryOptimizer.ScanDetailsAsync();
+
+        var blueScreens = await _blueScreenAnalyzer.GetEventsAsync();
+        BlueScreenText = blueScreens.Count > 0 ? $"发现 {blueScreens.Count} 次蓝屏" : "未发现蓝屏记录";
 
         await Task.Run(RefreshStartupCount);
     }

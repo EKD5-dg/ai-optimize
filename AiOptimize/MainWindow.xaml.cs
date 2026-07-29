@@ -21,6 +21,12 @@ public partial class MainWindow : Window
         _viewModel.RefreshStartupCount();
     }
 
+    private void OnBlueScreenClick(object sender, RoutedEventArgs e)
+    {
+        var window = new BlueScreenWindow { Owner = this };
+        window.ShowDialog();
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         _viewModel.Shutdown();

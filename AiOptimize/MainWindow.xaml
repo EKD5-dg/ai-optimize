@@ -219,6 +219,24 @@
                                 Style="{StaticResource AccentButton}" Click="OnManageStartupClick"/>
                     </Grid>
                 </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="30,0,12,0">
+                            <TextBlock Text="蓝屏分析" FontSize="15" FontWeight="SemiBold"/>
+                            <TextBlock Text="检查系统蓝屏记录并给出原因解读与建议" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding BlueScreenText}"
+                                   Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <Button Grid.Column="2" Content="查看" Width="88" Height="34"
+                                Style="{StaticResource AccentButton}" Click="OnBlueScreenClick"/>
+                    </Grid>
+                </Border>
             </StackPanel>
         </ScrollViewer>
 
