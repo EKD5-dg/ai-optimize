@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Media;
 using AiOptimize.Models;
 using AiOptimize.Services;
 
@@ -36,11 +37,29 @@ public sealed class StartupItemViewModel : ViewModelBase
     {
         _manager = manager;
         _item = item;
+        Info = StartupKnowledge.Describe(item.Name, item.Command);
     }
 
     public string Name => _item.Name;
-    public string Command => _item.Command;
+    public string Command => CommandPathFormatter.Clean(_item.Command);
     public string SourceDisplay => _item.SourceDisplay;
+
+    public StartupInfo Info { get; }
+    public string Description => Info.Description;
+
+    public string AdviceLabel => Info.Advice switch
+    {
+        StartupAdvice.Keep => "建议保留",
+        StartupAdvice.Optional => "可关闭",
+        _ => "自行判断",
+    };
+
+    public Brush AdviceBrush => Info.Advice switch
+    {
+        StartupAdvice.Keep => new SolidColorBrush(Color.FromRgb(0x7C, 0xE3, 0x8B)),
+        StartupAdvice.Optional => new SolidColorBrush(Color.FromRgb(0x4F, 0xC3, 0xF7)),
+        _ => new SolidColorBrush(Color.FromRgb(0xE8, 0xB4, 0x4C)),
+    };
 
     public bool IsEnabled
     {

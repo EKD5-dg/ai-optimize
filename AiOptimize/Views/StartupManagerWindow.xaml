@@ -28,7 +28,16 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel>
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                        <Border CornerRadius="4" Padding="6,1" Margin="8,0,0,0"
+                                                Background="#33FFFFFF" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding AdviceLabel}" Foreground="{Binding AdviceBrush}"
+                                                       FontSize="11" FontWeight="SemiBold"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Description}" Foreground="{Binding AdviceBrush}"
+                                               FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0"/>
                                     <TextBlock Text="{Binding Command}" Foreground="{StaticResource SubTextBrush}"
                                                FontSize="11" TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
