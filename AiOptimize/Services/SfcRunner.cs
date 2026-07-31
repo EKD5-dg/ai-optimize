@@ -14,8 +14,9 @@ public static class SfcInterpreter
 
 public static class SfcRunner
 {
-    public static async Task<DiskCheckResult> RunAsync()
+    public static async Task<DiskCheckResult> RunAsync(CancellationToken cancellationToken = default)
     {
+        Process? process = null;
         try
         {
             var psi = new ProcessStartInfo
@@ -24,13 +25,20 @@ public static class SfcRunner
                 Arguments = "/scannow",
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                // 不重定向输出流：sfc 持续输出进度（UTF-16），重定向不读取会导致管道写满死锁
             };
-            using var process = Process.Start(psi) ?? throw new Exception("无法启动系统文件检查");
-            await process.WaitForExitAsync();
-            var (healthy, message) = SfcInterpreter.Interpret(process.ExitCode);
-            return new DiskCheckResult(healthy, message);
+            process = Process.Start(psi) ?? throw new Exception("无法启动系统文件检查");
+            using (process)
+            {
+                await process.WaitForExitAsync(cancellationToken);
+                var (healthy, message) = SfcInterpreter.Interpret(process.ExitCode);
+                return new DiskCheckResult(healthy, message);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            try { if (process is { HasExited: false }) process.Kill(); } catch { }
+            return new DiskCheckResult(false, "系统文件检查已取消。");
         }
         catch (Exception ex)
         {

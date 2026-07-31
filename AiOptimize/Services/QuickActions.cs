@@ -21,10 +21,13 @@ public sealed record QuickActionSpec(string Label, string FileName, string? Argu
 /// <summary>蓝屏建议对应的一键操作：标签与启动方式。</summary>
 public static class QuickActionCatalog
 {
-    private static readonly Dictionary<QuickActionType, QuickActionSpec> Specs = new()
+    private static string SystemDrive =>
+        System.IO.Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows))?.TrimEnd('\\') ?? "C:";
+
+    private static Dictionary<QuickActionType, QuickActionSpec> BuildSpecs() => new()
     {
         [QuickActionType.DiskCheck] = new("一键磁盘检查", "cmd.exe",
-            "/k title 磁盘检查 && echo 正在在线检查系统盘（无需重启，请勿关闭窗口）... && chkdsk C: /scan", false),
+            $"/k title 磁盘检查 && echo 正在在线检查系统盘（无需重启，请勿关闭窗口）... && chkdsk {SystemDrive} /scan", false),
         [QuickActionType.MemoryDiagnostic] = new("运行内存诊断", "MdSched.exe", null, true),
         [QuickActionType.SfcScan] = new("修复系统文件", "cmd.exe",
             "/k title 系统文件修复 && echo 正在扫描并修复系统文件（可能需要十几分钟，请勿关闭窗口）... && sfc /scannow", false),
@@ -32,7 +35,12 @@ public static class QuickActionCatalog
         [QuickActionType.WindowsUpdate] = new("检查系统更新", "ms-settings:windowsupdate", null, true),
     };
 
-    public static QuickActionSpec Get(QuickActionType type) => Specs[type];
+    private static readonly Dictionary<QuickActionType, QuickActionSpec> Specs = BuildSpecs();
+
+    public static QuickActionSpec Get(QuickActionType type) =>
+        Specs.TryGetValue(type, out var spec)
+            ? spec
+            : throw new ArgumentOutOfRangeException(nameof(type), type, "未知的快捷操作类型");
 
     public static void Launch(QuickActionType type)
     {

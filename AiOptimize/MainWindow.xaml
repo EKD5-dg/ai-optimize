@@ -102,7 +102,7 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <CheckBox IsChecked="{Binding IsTempSelected}" VerticalAlignment="Center"/>
+                            <CheckBox IsChecked="{Binding IsTempSelected}" IsEnabled="{Binding IsNotOptimizing}" VerticalAlignment="Center"/>
                             <StackPanel Grid.Column="1" Margin="12,0">
                                 <TextBlock Text="临时文件清理" FontSize="15" FontWeight="SemiBold"/>
                                 <TextBlock Text="清理系统/用户临时目录与回收站" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
@@ -140,7 +140,7 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <CheckBox IsChecked="{Binding IsDeepSelected}" VerticalAlignment="Center"/>
+                            <CheckBox IsChecked="{Binding IsDeepSelected}" IsEnabled="{Binding IsNotOptimizing}" VerticalAlignment="Center"/>
                             <StackPanel Grid.Column="1" Margin="12,0">
                                 <TextBlock Text="深度垃圾清理" FontSize="15" FontWeight="SemiBold"/>
                                 <TextBlock Text="浏览器缓存、系统更新缓存、缩略图、错误报告等" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
@@ -178,7 +178,7 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <CheckBox IsChecked="{Binding IsMemorySelected}" VerticalAlignment="Center"/>
+                            <CheckBox IsChecked="{Binding IsMemorySelected}" IsEnabled="{Binding IsNotOptimizing}" VerticalAlignment="Center"/>
                             <StackPanel Grid.Column="1" Margin="12,0">
                                 <TextBlock Text="内存释放" FontSize="15" FontWeight="SemiBold"/>
                                 <TextBlock Text="压缩进程工作集并清空系统待机内存" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
@@ -265,7 +265,7 @@
 
         <!-- 底部操作区 -->
         <StackPanel Grid.Row="3" Margin="0,12,0,0">
-            <ProgressBar Height="8" Maximum="100" Value="{Binding ProgressValue}"
+            <ProgressBar Height="8" Maximum="100" Value="{Binding ProgressValue, Mode=OneWay}"
                          Style="{StaticResource SlimProgressBar}" Foreground="{StaticResource PurpleBrush}"
                          Visibility="{Binding IsOptimizing, Converter={StaticResource BoolToVis}}"/>
             <TextBlock Text="{Binding ProgressText}" Foreground="{StaticResource SubTextBrush}"

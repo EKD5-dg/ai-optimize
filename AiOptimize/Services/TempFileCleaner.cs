@@ -14,6 +14,9 @@ public sealed class TempFileCleaner
 
     private static readonly string[] TargetDirectories = { UserTempDir, WindowsTempDir };
 
+    /// <summary>清理目标目录（供守卫测试校验，防止清理范围被误改）。</summary>
+    internal static IReadOnlyList<string> GetCleanupTargets() => TargetDirectories;
+
     public Task<IReadOnlyList<ScanItem>> ScanDetailsAsync() => Task.Run<IReadOnlyList<ScanItem>>(() => new List<ScanItem>
     {
         new("用户临时文件", FileCleanupHelper.GetDirectorySize(UserTempDir)),
@@ -36,6 +39,10 @@ public sealed class TempFileCleaner
         {
             result.BytesFreed += recycleSize;
             result.Notes.Add("回收站已清空");
+        }
+        else if (hr != 0 && recycleSize > 0)
+        {
+            result.Notes.Add("回收站清空失败，可手动清空");
         }
         return result;
     });

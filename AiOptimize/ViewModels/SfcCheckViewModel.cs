@@ -16,17 +16,32 @@ public sealed class SfcCheckViewModel : ViewModelBase
     private bool _isHealthy;
     public bool IsHealthy { get => _isHealthy; set => SetProperty(ref _isHealthy, value); }
 
+    private readonly CancellationTokenSource _cts = new();
+
     public SfcCheckViewModel()
     {
         _ = RunAsync();
     }
 
+    /// <summary>窗口关闭时取消正在进行的检查（杀掉 sfc 进程）。</summary>
+    public void Cancel() => _cts.Cancel();
+
     private async Task RunAsync()
     {
-        var result = await SfcRunner.RunAsync();
-        IsRunning = false;
-        StatusText = "";
-        IsHealthy = result.IsHealthy;
-        ResultText = (result.IsHealthy ? "✔ " : "⚠ ") + result.Message;
+        try
+        {
+            var result = await SfcRunner.RunAsync(_cts.Token);
+            IsHealthy = result.IsHealthy;
+            ResultText = (result.IsHealthy ? "✔ " : "⚠ ") + result.Message;
+        }
+        catch (Exception ex)
+        {
+            ResultText = $"系统文件检查未能完成：{ex.Message}";
+        }
+        finally
+        {
+            IsRunning = false;
+            StatusText = "";
+        }
     }
 }

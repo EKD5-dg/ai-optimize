@@ -38,7 +38,9 @@ internal static class NativeMethods
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     internal static extern int SHEmptyRecycleBin(IntPtr hwnd, string? pszRootPath, uint dwFlags);
 
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    // x64 原生布局：cbSize(4) + 填充(4) + i64Size(8) + i64NumItems(8) = 24 字节，
+    // 不能用 Pack=4（那样只有 20 字节，cbSize 传错会导致查询失败）。项目已锁定 x64。
+    [StructLayout(LayoutKind.Sequential)]
     internal struct SHQUERYRBINFO
     {
         public int cbSize;

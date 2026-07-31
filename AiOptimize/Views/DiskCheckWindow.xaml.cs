@@ -5,9 +5,13 @@ namespace AiOptimize.Views;
 
 public partial class DiskCheckWindow : Window
 {
+    private readonly DiskCheckViewModel _viewModel;
+
     public DiskCheckWindow()
     {
         InitializeComponent();
-        DataContext = new DiskCheckViewModel();
+        _viewModel = new DiskCheckViewModel();
+        DataContext = _viewModel;
+        Closed += (_, _) => _viewModel.Cancel();
     }
 }

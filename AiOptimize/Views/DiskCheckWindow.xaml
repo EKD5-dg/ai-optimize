@@ -31,6 +31,9 @@
                             <DataTrigger Binding="{Binding IsHealthy}" Value="True">
                                 <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding RepairScheduled}" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </TextBlock.Style>

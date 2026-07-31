@@ -27,17 +27,19 @@ public sealed class StartupManagerViewModel : ViewModelBase
 
     public StartupManagerViewModel()
     {
-        ItemsView = CollectionViewSource.GetDefaultView(Items);
+        // 使用私有视图，避免与其他绑定共享默认视图的过滤器
+        ItemsView = new CollectionViewSource { Source = Items }.View;
         ItemsView.Filter = o => o is StartupItemViewModel item &&
             StartupSearch.Matches(item.Name, item.Description, item.Command, SearchText);
+        ItemsView.SortDescriptions.Add(new SortDescription(nameof(StartupItemViewModel.Name),
+            ListSortDirection.Ascending));
 
         var manager = new StartupManager();
         try
         {
-            foreach (var item in manager.GetItems())
-            {
-                Items.Add(new StartupItemViewModel(manager, item));
-            }
+            // 先全部读到本地列表，成功后再一次性填充，避免中途异常留下半截数据
+            var loaded = manager.GetItems().Select(item => new StartupItemViewModel(manager, item)).ToList();
+            foreach (var vm in loaded) Items.Add(vm);
         }
         catch (Exception ex)
         {
@@ -73,29 +75,65 @@ public sealed class StartupItemViewModel : ViewModelBase
         _ => "自行判断",
     };
 
+    private static readonly Brush KeepBrush = CreateFrozen(0x7C, 0xE3, 0x8B);
+    private static readonly Brush OptionalBrush = CreateFrozen(0x4F, 0xC3, 0xF7);
+    private static readonly Brush DefaultBrush = CreateFrozen(0xE8, 0xB4, 0x4C);
+
+    private static Brush CreateFrozen(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
     public Brush AdviceBrush => Info.Advice switch
     {
-        StartupAdvice.Keep => new SolidColorBrush(Color.FromRgb(0x7C, 0xE3, 0x8B)),
-        StartupAdvice.Optional => new SolidColorBrush(Color.FromRgb(0x4F, 0xC3, 0xF7)),
-        _ => new SolidColorBrush(Color.FromRgb(0xE8, 0xB4, 0x4C)),
+        StartupAdvice.Keep => KeepBrush,
+        StartupAdvice.Optional => OptionalBrush,
+        _ => DefaultBrush,
     };
+
+    private bool _isToggling;
 
     public bool IsEnabled
     {
         get => _item.IsEnabled;
         set
         {
-            if (_item.IsEnabled == value) return;
+            // 防重入：绑定回写与命令并发时只执行一次注册表写入
+            if (_item.IsEnabled == value || _isToggling) return;
+            _isToggling = true;
             try
             {
                 _manager.SetEnabled(_item, value);
             }
-            catch (Exception ex)
+            catch (System.Security.SecurityException ex)
             {
-                MessageBox.Show($"操作失败：{ex.Message}", "启动项管理",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                ShowError($"没有权限修改该启动项：{ex.Message}");
             }
-            OnPropertyChanged();
+            catch (UnauthorizedAccessException ex)
+            {
+                ShowError($"没有权限修改该启动项：{ex.Message}");
+            }
+            catch (System.IO.IOException ex)
+            {
+                ShowError($"操作失败：{ex.Message}");
+            }
+            finally
+            {
+                _isToggling = false;
+                // 无论成败都刷新绑定：失败时开关弹回真实状态
+                OnPropertyChanged();
+            }
         }
+    }
+
+    private static void ShowError(string message)
+    {
+        var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
+        if (owner != null)
+            MessageBox.Show(owner, message, "启动项管理", MessageBoxButton.OK, MessageBoxImage.Warning);
+        else
+            MessageBox.Show(message, "启动项管理", MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 }

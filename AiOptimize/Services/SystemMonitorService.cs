@@ -10,10 +10,11 @@ public sealed class SystemMonitorService : IDisposable
 {
     private readonly PerformanceCounter _cpuCounter = new("Processor", "% Processor Time", "_Total");
     private readonly CancellationTokenSource _cts = new();
+    private Task? _runTask;
 
     public event Action<SystemSnapshot>? SnapshotUpdated;
 
-    public void Start() => _ = RunAsync(_cts.Token);
+    public void Start() => _runTask = RunAsync(_cts.Token);
 
     private async Task RunAsync(CancellationToken token)
     {
@@ -22,7 +23,18 @@ public sealed class SystemMonitorService : IDisposable
         {
             while (await timer.WaitForNextTickAsync(token))
             {
-                SnapshotUpdated?.Invoke(Capture());
+                SystemSnapshot snapshot;
+                try { snapshot = Capture(); }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[SystemMonitor] 采集失败：{ex.Message}");
+                    continue; // 单次采集失败不终止监控循环
+                }
+                try { SnapshotUpdated?.Invoke(snapshot); }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[SystemMonitor] 事件订阅方异常：{ex.Message}");
+                }
             }
         }
         catch (OperationCanceledException) { }
@@ -61,6 +73,8 @@ public sealed class SystemMonitorService : IDisposable
     public void Dispose()
     {
         _cts.Cancel();
+        // 等采集循环退出后再释放计数器，避免 NextValue 与 Dispose 竞态
+        try { _runTask?.Wait(TimeSpan.FromSeconds(3)); } catch { }
         _cts.Dispose();
         _cpuCounter.Dispose();
     }

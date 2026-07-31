@@ -67,7 +67,31 @@
                             <Rectangle x:Name="PART_Track"/>
                             <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}"
                                     CornerRadius="4" HorizontalAlignment="Left"/>
+                            <!-- 不确定模式：循环滑动的高亮块 -->
+                            <Border x:Name="IndeterminateBlock" Background="{TemplateBinding Foreground}"
+                                    CornerRadius="4" Width="60" HorizontalAlignment="Left"
+                                    Visibility="Collapsed" Opacity="0.9">
+                                <Border.RenderTransform>
+                                    <TranslateTransform x:Name="IndeterminateTransform" X="-60"/>
+                                </Border.RenderTransform>
+                            </Border>
                         </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsIndeterminate" Value="True">
+                                <Setter TargetName="PART_Indicator" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="IndeterminateBlock" Property="Visibility" Value="Visible"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="IndeterminateTransform"
+                                                Storyboard.TargetProperty="X"
+                                                From="-60" To="600" Duration="0:0:1.4"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>

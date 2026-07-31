@@ -5,13 +5,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- 锁定 x64：SHQUERYRBINFO/SHFILEOPSTRUCT 的原生布局按 x64 声明，避免 WOW64 重定向问题 -->
+    <PlatformTarget>x64</PlatformTarget>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyTitle>AI 电脑优化助手</AssemblyTitle>
     <Version>1.3.3</Version>
     <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.10" />
+    <PackageReference Include="System.Diagnostics.EventLog" Version="8.0.1" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="AiOptimize.Tests" />
   </ItemGroup>
 </Project>

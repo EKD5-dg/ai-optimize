@@ -18,16 +18,37 @@ public sealed class BigFilesViewModel : ViewModelBase
     private bool _isScanning = true;
     public bool IsScanning { get => _isScanning; set => SetProperty(ref _isScanning, value); }
 
+    private readonly CancellationTokenSource _cts = new();
+
     public BigFilesViewModel()
     {
         _ = ScanAsync();
     }
 
+    /// <summary>窗口关闭时取消全盘扫描。</summary>
+    public void Cancel() => _cts.Cancel();
+
     private async Task ScanAsync()
     {
-        var files = await BigFileScanner.ScanAsync();
-        foreach (var file in files) Items.Add(new BigFileItemViewModel(this, file));
-        IsScanning = false;
+        try
+        {
+            var files = await BigFileScanner.ScanAsync(cancellationToken: _cts.Token);
+            foreach (var file in files) Items.Add(new BigFileItemViewModel(this, file));
+        }
+        catch (OperationCanceledException)
+        {
+            StatusText = "扫描已取消。";
+            return;
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"扫描失败：{ex.Message}";
+            return;
+        }
+        finally
+        {
+            IsScanning = false;
+        }
         UpdateStatus();
     }
 
@@ -73,11 +94,22 @@ public sealed class BigFileItemViewModel
         _ => "自行判断",
     };
 
+    private static readonly Brush SafeBrush = CreateFrozen(0x7C, 0xE3, 0x8B);
+    private static readonly Brush DangerBrush = CreateFrozen(0xEF, 0x53, 0x50);
+    private static readonly Brush DefaultBrush = CreateFrozen(0xE8, 0xB4, 0x4C);
+
+    private static Brush CreateFrozen(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
     public Brush RiskBrush => Kind.Risk switch
     {
-        FileRisk.Safe => new SolidColorBrush(Color.FromRgb(0x7C, 0xE3, 0x8B)),
-        FileRisk.Danger => new SolidColorBrush(Color.FromRgb(0xEF, 0x53, 0x50)),
-        _ => new SolidColorBrush(Color.FromRgb(0xE8, 0xB4, 0x4C)),
+        FileRisk.Safe => SafeBrush,
+        FileRisk.Danger => DangerBrush,
+        _ => DefaultBrush,
     };
 
     public RelayCommand OpenLocationCommand { get; }

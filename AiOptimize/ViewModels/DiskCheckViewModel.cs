@@ -17,39 +17,69 @@ public sealed class DiskCheckViewModel : ViewModelBase
     private bool _isHealthy;
     public bool IsHealthy { get => _isHealthy; set => SetProperty(ref _isHealthy, value); }
 
+    // 已排程修复：磁盘仍不健康，但不需要再显示修复按钮，结果文字用中性色
+    private bool _repairScheduled;
+    public bool RepairScheduled { get => _repairScheduled; set => SetProperty(ref _repairScheduled, value); }
+
     private bool _showRepairButton;
     public bool ShowRepairButton { get => _showRepairButton; set => SetProperty(ref _showRepairButton, value); }
 
     public RelayCommand ScheduleRepairCommand { get; }
 
+    private readonly CancellationTokenSource _cts = new();
+
     public DiskCheckViewModel()
     {
-        ScheduleRepairCommand = new RelayCommand(_ => ScheduleRepair());
+        ScheduleRepairCommand = new RelayCommand(async _ => await ScheduleRepairAsync());
         _ = RunAsync();
     }
 
+    /// <summary>窗口关闭时取消正在进行的检查（杀掉 chkdsk 进程）。</summary>
+    public void Cancel() => _cts.Cancel();
+
     private async Task RunAsync()
     {
-        var result = await DiskCheckRunner.RunScanAsync();
-        IsRunning = false;
-        StatusText = "";
-        IsHealthy = result.IsHealthy;
-        ResultText = result.IsHealthy ? "✔ " + result.Message : "⚠ " + result.Message;
-        ShowRepairButton = !result.IsHealthy;
+        try
+        {
+            var result = await DiskCheckRunner.RunScanAsync(_cts.Token);
+            IsHealthy = result.IsHealthy;
+            ResultText = result.IsHealthy ? "✔ " + result.Message : "⚠ " + result.Message;
+            ShowRepairButton = !result.IsHealthy;
+        }
+        catch (Exception ex)
+        {
+            ResultText = $"磁盘检查未能完成：{ex.Message}";
+        }
+        finally
+        {
+            IsRunning = false;
+            StatusText = "";
+        }
     }
 
-    private void ScheduleRepair()
+    private async Task ScheduleRepairAsync()
     {
-        var result = DiskCheckRunner.ScheduleRepair();
-        if (result.IsHealthy)
+        if (IsRunning) return;
+        IsRunning = true;
+        StatusText = "正在安排修复…";
+        try
         {
-            ShowRepairButton = false;
-            IsHealthy = true;
-            ResultText = "✔ " + result.Message;
+            var result = await DiskCheckRunner.ScheduleRepairAsync();
+            if (result.IsHealthy)
+            {
+                ShowRepairButton = false;
+                RepairScheduled = true;
+                ResultText = "✔ " + result.Message;
+            }
+            else
+            {
+                MessageBox.Show(result.Message, "磁盘检查", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
-        else
+        finally
         {
-            MessageBox.Show(result.Message, "磁盘检查", MessageBoxButton.OK, MessageBoxImage.Warning);
+            IsRunning = false;
+            StatusText = "";
         }
     }
 }

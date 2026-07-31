@@ -10,7 +10,7 @@ public sealed class BlueScreenViewModel : ViewModelBase
 {
     public ObservableCollection<BlueScreenItemViewModel> Items { get; } = new();
 
-    private string _emptyText = "";
+    private string _emptyText = "正在读取系统日志…";
     public string EmptyText { get => _emptyText; set => SetProperty(ref _emptyText, value); }
 
     public BlueScreenViewModel()
@@ -20,9 +20,16 @@ public sealed class BlueScreenViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        var events = await new BlueScreenAnalyzer().GetEventsAsync();
-        foreach (var item in events) Items.Add(new BlueScreenItemViewModel(item));
-        EmptyText = Items.Count == 0 ? "未发现蓝屏记录，系统运行良好 ✔" : "";
+        try
+        {
+            var events = await new BlueScreenAnalyzer().GetEventsAsync();
+            foreach (var item in events) Items.Add(new BlueScreenItemViewModel(item));
+            EmptyText = Items.Count == 0 ? "未发现蓝屏记录，系统运行良好 ✔" : "";
+        }
+        catch (Exception ex)
+        {
+            EmptyText = $"读取蓝屏记录失败：{ex.Message}";
+        }
     }
 }
 

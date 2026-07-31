@@ -24,7 +24,17 @@ public sealed class MainViewModel : ViewModelBase
     public string MemoryText { get => _memoryText; set => SetProperty(ref _memoryText, value); }
 
     private IReadOnlyList<DiskUsageInfo> _disks = Array.Empty<DiskUsageInfo>();
-    public IReadOnlyList<DiskUsageInfo> Disks { get => _disks; set => SetProperty(ref _disks, value); }
+    public IReadOnlyList<DiskUsageInfo> Disks
+    {
+        get => _disks;
+        set
+        {
+            // 内容相同则不通知：磁盘列表每秒刷新，引用比较必然不等，
+            // 逐元素值比较避免 ItemsControl 每秒全量重建可视化树
+            if (_disks.Count == value.Count && _disks.SequenceEqual(value)) return;
+            SetProperty(ref _disks, value);
+        }
+    }
 
     private bool _isTempSelected = true;
     public bool IsTempSelected { get => _isTempSelected; set => SetProperty(ref _isTempSelected, value); }
@@ -60,7 +70,21 @@ public sealed class MainViewModel : ViewModelBase
     public string BlueScreenText { get => _blueScreenText; set => SetProperty(ref _blueScreenText, value); }
 
     private bool _isOptimizing;
-    public bool IsOptimizing { get => _isOptimizing; set => SetProperty(ref _isOptimizing, value); }
+    public bool IsOptimizing
+    {
+        get => _isOptimizing;
+        set
+        {
+            if (SetProperty(ref _isOptimizing, value))
+            {
+                OnPropertyChanged(nameof(IsNotOptimizing));
+                OptimizeCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>供复选框 IsEnabled 反向绑定：优化进行中禁止改动选择。</summary>
+    public bool IsNotOptimizing => !IsOptimizing;
 
     private double _progressValue;
     public double ProgressValue { get => _progressValue; set => SetProperty(ref _progressValue, value); }
@@ -71,13 +95,14 @@ public sealed class MainViewModel : ViewModelBase
     private string _resultText = "";
     public string ResultText { get => _resultText; set => SetProperty(ref _resultText, value); }
 
-    public RelayCommand OptimizeCommand { get; }
+    public AsyncRelayCommand OptimizeCommand { get; }
 
     public MainViewModel()
     {
-        OptimizeCommand = new RelayCommand(
+        OptimizeCommand = new AsyncRelayCommand(
             async _ => await OptimizeAsync(),
-            _ => !IsOptimizing && (IsTempSelected || IsDeepSelected || IsMemorySelected));
+            _ => !IsOptimizing && (IsTempSelected || IsDeepSelected || IsMemorySelected),
+            ex => ResultText = $"优化过程中出现问题：{ex.Message}");
 
         _monitor.SnapshotUpdated += OnSnapshot;
         _monitor.Start();
@@ -109,20 +134,35 @@ public sealed class MainViewModel : ViewModelBase
         TempScanText = "扫描中…";
         DeepScanText = "扫描中…";
 
-        var tempDetails = await _tempCleaner.ScanDetailsAsync();
-        TempDetails = tempDetails;
-        TempScanText = $"可清理 {ByteFormatter.Format(tempDetails.Sum(d => d.Bytes))}";
+        // 每个子扫描独立容错：任一步失败不影响其余步骤，界面也不会卡在"扫描中"
+        try
+        {
+            var tempDetails = await _tempCleaner.ScanDetailsAsync();
+            TempDetails = tempDetails;
+            TempScanText = $"可清理 {ByteFormatter.Format(tempDetails.Sum(d => d.Bytes))}";
+        }
+        catch { TempScanText = "读取失败"; }
 
-        var deepDetails = await _deepCleaner.ScanDetailsAsync();
-        DeepDetails = deepDetails;
-        DeepScanText = $"可清理 {ByteFormatter.Format(deepDetails.Sum(d => d.Bytes))}";
+        try
+        {
+            var deepDetails = await _deepCleaner.ScanDetailsAsync();
+            DeepDetails = deepDetails;
+            DeepScanText = $"可清理 {ByteFormatter.Format(deepDetails.Sum(d => d.Bytes))}";
+        }
+        catch { DeepScanText = "读取失败"; }
 
-        MemoryDetails = await _memoryOptimizer.ScanDetailsAsync();
+        try { MemoryDetails = await _memoryOptimizer.ScanDetailsAsync(); }
+        catch { /* 内存明细读取失败时保留旧值 */ }
 
-        var blueScreens = await _blueScreenAnalyzer.GetEventsAsync();
-        BlueScreenText = blueScreens.Count > 0 ? $"发现 {blueScreens.Count} 次蓝屏" : "未发现蓝屏记录";
+        try
+        {
+            var blueScreens = await _blueScreenAnalyzer.GetEventsAsync();
+            BlueScreenText = blueScreens.Count > 0 ? $"发现 {blueScreens.Count} 次蓝屏" : "未发现蓝屏记录";
+        }
+        catch { BlueScreenText = "读取失败"; }
 
-        await Task.Run(RefreshStartupCount);
+        try { await Task.Run(RefreshStartupCount); }
+        catch { /* RefreshStartupCount 内部已兜底 */ }
     }
 
     private async Task OptimizeAsync()
@@ -132,19 +172,22 @@ public sealed class MainViewModel : ViewModelBase
         ProgressValue = 0;
         var summary = new List<string>();
         var total = new CleanResult();
-        int steps = (IsTempSelected ? 1 : 0) + (IsDeepSelected ? 1 : 0) + (IsMemorySelected ? 1 : 0);
+        // 快照选择状态：优化过程中复选框已禁用，但防御性快照避免中途变化导致进度计算错误
+        bool doTemp = IsTempSelected, doDeep = IsDeepSelected, doMemory = IsMemorySelected;
+        int steps = (doTemp ? 1 : 0) + (doDeep ? 1 : 0) + (doMemory ? 1 : 0);
+        if (steps == 0) { IsOptimizing = false; return; }
         int done = 0;
 
         try
         {
-            if (IsTempSelected)
+            if (doTemp)
             {
                 ProgressText = "正在清理临时文件…";
                 total.Merge(await _tempCleaner.CleanAsync());
                 ProgressValue = ++done * 100.0 / steps;
             }
 
-            if (IsDeepSelected)
+            if (doDeep)
             {
                 ProgressText = "正在深度清理垃圾文件…";
                 total.Merge(await _deepCleaner.CleanAsync());
@@ -154,7 +197,7 @@ public sealed class MainViewModel : ViewModelBase
             if (total.BytesFreed > 0)
                 summary.Add($"释放磁盘空间 {ByteFormatter.Format(total.BytesFreed)}");
 
-            if (IsMemorySelected)
+            if (doMemory)
             {
                 ProgressText = "正在释放内存…";
                 var mem = await _memoryOptimizer.OptimizeAsync();
@@ -168,7 +211,9 @@ public sealed class MainViewModel : ViewModelBase
                 summary.Add(note);
 
             ProgressText = "优化完成";
-            ResultText = "✔ " + string.Join("，", summary);
+            ResultText = summary.Count > 0
+                ? "✔ " + string.Join("，", summary)
+                : "✔ 已完成，没有发现需要清理的内容";
         }
         catch (Exception ex)
         {

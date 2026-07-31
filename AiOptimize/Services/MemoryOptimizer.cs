@@ -68,29 +68,43 @@ public sealed class MemoryOptimizer
     {
         try
         {
-            EnablePrivilege(NativeMethods.SE_PROFILE_SINGLE_PROCESS_NAME);
+            if (!EnablePrivilege(NativeMethods.SE_PROFILE_SINGLE_PROCESS_NAME))
+            {
+                Debug.WriteLine("[MemoryOptimizer] 无法启用 SeProfileSingleProcessPrivilege，跳过待机列表清理");
+                return;
+            }
             int command = NativeMethods.MemoryPurgeStandbyList;
-            NativeMethods.NtSetSystemInformation(NativeMethods.SystemMemoryListInformation, ref command, sizeof(int));
+            int status = NativeMethods.NtSetSystemInformation(
+                NativeMethods.SystemMemoryListInformation, ref command, sizeof(int));
+            if (status != 0) // NTSTATUS：0 = STATUS_SUCCESS
+                Debug.WriteLine($"[MemoryOptimizer] 待机列表清理失败，NTSTATUS=0x{status:X8}");
         }
-        catch { /* 权限不足时静默降级 */ }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MemoryOptimizer] 待机列表清理异常：{ex.Message}");
+        }
     }
 
-    private static void EnablePrivilege(string privilege)
+    /// <summary>启用指定特权。AdjustTokenPrivileges 返回 true 不代表特权已生效，必须再查 GetLastError。</summary>
+    private static bool EnablePrivilege(string privilege)
     {
         using var current = Process.GetCurrentProcess();
         if (!NativeMethods.OpenProcessToken(current.Handle,
                 NativeMethods.TOKEN_ADJUST_PRIVILEGES | NativeMethods.TOKEN_QUERY, out var token))
-            return;
+            return false;
         try
         {
-            if (!NativeMethods.LookupPrivilegeValue(null, privilege, out var luid)) return;
+            if (!NativeMethods.LookupPrivilegeValue(null, privilege, out var luid)) return false;
             var tp = new NativeMethods.TOKEN_PRIVILEGES
             {
                 PrivilegeCount = 1,
                 Luid = luid,
                 Attributes = NativeMethods.SE_PRIVILEGE_ENABLED,
             };
-            NativeMethods.AdjustTokenPrivileges(token, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+            if (!NativeMethods.AdjustTokenPrivileges(token, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero))
+                return false;
+            // ERROR_NOT_ALL_ASSIGNED(1300) 表示特权未全部授予
+            return System.Runtime.InteropServices.Marshal.GetLastWin32Error() == 0;
         }
         finally
         {

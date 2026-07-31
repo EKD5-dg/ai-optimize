@@ -78,13 +78,20 @@ public sealed class DeepCleaner
             foreach (var p in processes) p.Dispose();
         }
 
-        FileCleanupHelper.DeleteDirectoryContents(Path.Combine(WindowsDir, "SoftwareDistribution", "Download"), result);
+        foreach (var dir in GetSystemCleanupDirs())
+            FileCleanupHelper.DeleteDirectoryContents(dir, result);
         FileCleanupHelper.DeleteFiles(Path.Combine(LocalAppData, @"Microsoft\Windows\Explorer"), "thumbcache_*.db", result);
-        FileCleanupHelper.DeleteDirectoryContents(Path.Combine(ProgramData, @"Microsoft\Windows\WER\ReportQueue"), result);
-        FileCleanupHelper.DeleteDirectoryContents(Path.Combine(ProgramData, @"Microsoft\Windows\WER\ReportArchive"), result);
         FileCleanupHelper.DeleteFiles(Path.Combine(WindowsDir, "Prefetch"), "*.pf", result);
         return result;
     });
+
+    /// <summary>深度清理的系统目录（供守卫测试校验，防止清理范围被误改）。</summary>
+    internal static IReadOnlyList<string> GetSystemCleanupDirs() => new[]
+    {
+        Path.Combine(WindowsDir, "SoftwareDistribution", "Download"),
+        Path.Combine(ProgramData, @"Microsoft\Windows\WER\ReportQueue"),
+        Path.Combine(ProgramData, @"Microsoft\Windows\WER\ReportArchive"),
+    };
 
     /// <summary>浏览器缓存清理策略：有窗口=跳过；仅后台驻留=先结束再清；未运行=直接清。</summary>
     public static BrowserCleanAction DecideBrowserAction(bool anyProcess, bool anyWindow)
@@ -95,9 +102,19 @@ public sealed class DeepCleaner
 
     private static void CloseProcesses(Process[] processes)
     {
+        // 先优雅关闭（后台驻留进程通常无窗口，CloseMainWindow 会返回 false，但不影响后续 Kill）
         foreach (var p in processes)
         {
-            try { p.Kill(); } catch { }
+            try { p.CloseMainWindow(); } catch { }
+        }
+        foreach (var p in processes)
+        {
+            try { p.WaitForExit(2000); } catch { }
+        }
+        // 未退出的再强杀，避免损坏浏览器 profile
+        foreach (var p in processes)
+        {
+            try { if (!p.HasExited) p.Kill(); } catch { }
         }
         foreach (var p in processes)
         {
