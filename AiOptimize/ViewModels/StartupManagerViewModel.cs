@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Media;
 using AiOptimize.Models;
 using AiOptimize.Services;
@@ -10,8 +12,25 @@ public sealed class StartupManagerViewModel : ViewModelBase
 {
     public ObservableCollection<StartupItemViewModel> Items { get; } = new();
 
+    /// <summary>带搜索过滤的视图，界面绑定此属性。</summary>
+    public ICollectionView ItemsView { get; }
+
+    private string _searchText = "";
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (SetProperty(ref _searchText, value)) ItemsView.Refresh();
+        }
+    }
+
     public StartupManagerViewModel()
     {
+        ItemsView = CollectionViewSource.GetDefaultView(Items);
+        ItemsView.Filter = o => o is StartupItemViewModel item &&
+            StartupSearch.Matches(item.Name, item.Description, item.Command, SearchText);
+
         var manager = new StartupManager();
         try
         {
