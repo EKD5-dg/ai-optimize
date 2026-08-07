@@ -31,7 +31,7 @@ public static class QuickActionCatalog
         [QuickActionType.MemoryDiagnostic] = new("运行内存诊断", "MdSched.exe", null, true),
         [QuickActionType.SfcScan] = new("修复系统文件", "cmd.exe",
             "/k title 系统文件修复 && echo 正在扫描并修复系统文件（可能需要十几分钟，请勿关闭窗口）... && sfc /scannow", false),
-        [QuickActionType.DeviceManager] = new("打开设备管理器", "devmgmt.msc", null, true),
+        [QuickActionType.DeviceManager] = new("检测问题驱动", "devmgmt.msc", null, true),
         [QuickActionType.WindowsUpdate] = new("检查系统更新", "ms-settings:windowsupdate", null, true),
     };
 

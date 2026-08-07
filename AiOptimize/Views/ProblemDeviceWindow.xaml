@@ -1,0 +1,53 @@
+<Window x:Class="AiOptimize.Views.ProblemDeviceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="设备检测" Width="520" Height="420"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BgBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="Microsoft YaHei UI">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 标题 -->
+        <TextBlock Grid.Row="0" Text="🔍 设备检测结果" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+
+        <!-- 状态 -->
+        <TextBlock Grid.Row="1" Text="{Binding StatusText}" Margin="0,0,0,12"
+                   Foreground="{StaticResource SubTextBrush}"/>
+
+        <!-- 设备列表 -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Items}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource CardBrush}" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
+                                <TextBlock Text="{Binding ProblemDescription}" Margin="0,4,0,8"
+                                           Foreground="{StaticResource SubTextBrush}" TextWrapping="Wrap"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="打开设备管理器" Style="{StaticResource LinkButton}"
+                                            Command="{Binding OpenDeviceManagerCommand}" Margin="0,0,12,0"/>
+                                    <Button Content="尝试自动修复" Style="{StaticResource LinkButton}"
+                                            Command="{Binding UpdateDriverCommand}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- 底部提示 -->
+        <TextBlock Grid.Row="3" Margin="0,12,0,0" TextWrapping="Wrap"
+                   Foreground="{StaticResource SubTextBrush}" FontSize="12">
+            提示：如果自动修复无效，请点击「打开设备管理器」，找到对应设备 → 右键 → 更新驱动程序
+        </TextBlock>
+    </Grid>
+</Window>

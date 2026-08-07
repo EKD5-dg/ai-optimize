@@ -75,6 +75,9 @@ public sealed class QuickActionViewModel
                     case QuickActionType.SfcScan:
                         new SfcCheckWindow { Owner = owner }.ShowDialog();
                         return;
+                    case QuickActionType.DeviceManager:
+                        new ProblemDeviceWindow { Owner = owner }.ShowDialog();
+                        return;
                     case QuickActionType.MemoryDiagnostic:
                         MessageBox.Show(
                             "即将打开 Windows 内存诊断。\n\n它会问你“立即重启检查”还是“下次开机时检查”：\n• 检查在开机前的蓝色界面进行，大约 10-20 分钟，完成后自动进入系统；\n• 请先保存好正在编辑的文件再选“立即重启”。",
