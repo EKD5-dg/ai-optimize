@@ -7,6 +7,7 @@
         <converters:BytesToTextConverter x:Key="BytesToText"/>
         <converters:UsageToBrushConverter x:Key="UsageToBrush"/>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InvBoolToVis"/>
 
         <!-- 深色主题色板 -->
         <SolidColorBrush x:Key="BgBrush" Color="#1E1E2E"/>

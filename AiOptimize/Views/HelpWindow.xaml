@@ -86,6 +86,20 @@
                                    Text="• 每次打开程序都弹出深色确认框？这是 Windows 的权限确认（UAC），因为清理系统垃圾需要管理员权限，点「是」即可，属正常现象。&#x0a;• 清理会不会误删我的文件？不会。本程序只清理系统公认的缓存和临时文件位置，你的文档、照片、微信/QQ 聊天记录、桌面文件等个人数据完全不受影响。&#x0a;• 正在使用的文件会被自动跳过，不会强行删除。"/>
                     </StackPanel>
                 </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpTitle}" Text="🔄 软件更新"/>
+                        <TextBlock Style="{StaticResource HelpText}"
+                                   Text="软件启动时会自动检查新版本，有新版本会弹窗提醒。也可以随时点下面的按钮手动检查。"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button x:Name="CheckUpdateButton" Content="检查更新" Width="104" Height="32"
+                                    Style="{StaticResource AccentButton}" Click="OnCheckUpdateClick"/>
+                            <TextBlock x:Name="VersionTextBlock" Foreground="{StaticResource SubTextBrush}"
+                                       FontSize="12" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
     </Grid>

@@ -21,7 +21,11 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="AI 电脑优化助手" FontSize="22" FontWeight="Bold"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="AI 电脑优化助手" FontSize="22" FontWeight="Bold"/>
+                <TextBlock Text="{Binding VersionText}" Foreground="{StaticResource SubTextBrush}"
+                           FontSize="12" VerticalAlignment="Bottom" Margin="10,0,0,4"/>
+            </StackPanel>
             <Button Grid.Column="1" Content="❓ 使用说明" Style="{StaticResource LinkButton}"
                     Click="OnHelpClick" VerticalAlignment="Center" Margin="0,0,4,0"/>
         </Grid>

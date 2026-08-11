@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System.Reflection;
+using System.Windows;
+using AiOptimize.Services;
 using AiOptimize.ViewModels;
 using AiOptimize.Views;
 
@@ -12,6 +14,35 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = _viewModel;
+    }
+
+    protected override async void OnContentRendered(EventArgs e)
+    {
+        base.OnContentRendered(e);
+        // 后台静默检查更新：失败不打扰，发现新版本才弹窗
+        await CheckForUpdatesAsync();
+    }
+
+    /// <summary>延迟数秒后查询 GitHub Releases；有新版本才弹出更新窗口。</summary>
+    private async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2)); // 等主窗口先渲染完，避免启动卡顿
+            if (!IsVisible) return;
+            var currentVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
+            var update = await UpdateService.CheckLatestAsync(currentVersion);
+            if (update is null) return;
+            Dispatcher.Invoke(() =>
+            {
+                if (IsVisible)
+                    new UpdateWindow(update) { Owner = this }.ShowDialog();
+            });
+        }
+        catch
+        {
+            // 更新检查失败不影响使用
+        }
     }
 
     private void OnManageStartupClick(object sender, RoutedEventArgs e)

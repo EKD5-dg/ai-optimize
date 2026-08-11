@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Windows;
 using AiOptimize.Models;
 using AiOptimize.Services;
@@ -7,6 +8,10 @@ namespace AiOptimize.ViewModels;
 
 public sealed class MainViewModel : ViewModelBase
 {
+    /// <summary>当前版本号（与 csproj 的 &lt;Version&gt; 保持一致），显示在主窗口标题旁。</summary>
+    public string VersionText =>
+        "v" + (Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0");
+
     private readonly SystemMonitorService _monitor = new();
     private readonly TempFileCleaner _tempCleaner = new();
     private readonly DeepCleaner _deepCleaner = new();

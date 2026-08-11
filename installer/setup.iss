@@ -2,13 +2,13 @@
 [Setup]
 AppId={{B7E5D3A1-6C2F-4E8A-9D4B-1F2A3C4D5E6F}
 AppName=AI 电脑优化助手
-AppVersion=1.3.5
+AppVersion=1.3.6
 AppPublisher=macan
 DefaultDirName={autopf}\AiOptimize
 DefaultGroupName=AI 电脑优化助手
 DisableProgramGroupPage=yes
 OutputDir=..\dist
-OutputBaseFilename=AI电脑优化助手安装程序_v1.3.5
+OutputBaseFilename=AI电脑优化助手安装程序_v1.3.6
 Compression=lzma2/max
 SolidCompression=yes
 PrivilegesRequired=admin
@@ -23,7 +23,7 @@ UninstallDisplayName=AI 电脑优化助手
 Name: "desktopicon"; Description: "创建桌面快捷方式 (Create desktop shortcut)"
 
 [Files]
-Source: "..\publish-sc\AiOptimize.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\publish\AiOptimize.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\AI 电脑优化助手"; Filename: "{app}\AiOptimize.exe"
