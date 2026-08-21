@@ -10,8 +10,14 @@ public sealed class BlueScreenViewModel : ViewModelBase
 {
     public ObservableCollection<BlueScreenItemViewModel> Items { get; } = new();
 
+    /// <summary>顶部诊断摘要的提示行（环境风险 + 历史统计）。</summary>
+    public ObservableCollection<SummaryLineViewModel> SummaryLines { get; } = new();
+
     private string _emptyText = "正在读取系统日志…";
     public string EmptyText { get => _emptyText; set => SetProperty(ref _emptyText, value); }
+
+    private bool _hasSummary;
+    public bool HasSummary { get => _hasSummary; set => SetProperty(ref _hasSummary, value); }
 
     public BlueScreenViewModel()
     {
@@ -22,14 +28,69 @@ public sealed class BlueScreenViewModel : ViewModelBase
     {
         try
         {
-            var events = await new BlueScreenAnalyzer().GetEventsAsync();
+            // 事件读取与上下文探测并行执行，互不阻塞
+            var eventsTask = new BlueScreenAnalyzer().GetEventsAsync();
+            var contextTask = BlueScreenContextProbe.ProbeAsync();
+            await Task.WhenAll(eventsTask, contextTask);
+
+            var events = eventsTask.Result;
             foreach (var item in events) Items.Add(new BlueScreenItemViewModel(item));
             EmptyText = Items.Count == 0 ? "未发现蓝屏记录，系统运行良好 ✔" : "";
+            if (Items.Count > 0 || contextTask.Result.Hints.Count > 0)
+            {
+                BuildSummary(events, contextTask.Result);
+            }
         }
         catch (Exception ex)
         {
             EmptyText = $"读取蓝屏记录失败：{ex.Message}";
         }
+    }
+
+    /// <summary>汇总环境风险提示 + 崩溃历史统计。</summary>
+    private void BuildSummary(IReadOnlyList<BlueScreenEvent> events, BlueScreenContext context)
+    {
+        // 环境风险提示
+        foreach (var hint in context.Hints)
+        {
+            SummaryLines.Add(new SummaryLineViewModel(hint.Text, hint.Severity));
+        }
+
+        // 历史统计：总量 + 同代码重复次数（重复出现 = 高嫌疑）
+        if (events.Count > 0)
+        {
+            var byCode = events.GroupBy(e => e.StopCodeText)
+                .OrderByDescending(g => g.Count())
+                .ThenByDescending(g => g.Max(e => e.Time));
+            foreach (var g in byCode)
+            {
+                bool repeated = g.Count() >= 2;
+                SummaryLines.Add(new SummaryLineViewModel(
+                    $"停止代码 {g.Key}（{g.First().Name}）共出现 {g.Count()} 次" +
+                    (repeated ? "，反复出现说明是该代码对应的驱动/硬件持续有问题" : ""),
+                    repeated ? ContextSeverity.High : ContextSeverity.Info));
+            }
+            SummaryLines.Add(new SummaryLineViewModel(
+                $"共 {events.Count} 条蓝屏记录，最近一次：{events.Max(e => e.Time):yyyy/MM/dd HH:mm}。",
+                ContextSeverity.Info));
+        }
+
+        HasSummary = SummaryLines.Count > 0;
+    }
+}
+
+/// <summary>诊断摘要单行：按严重程度着色。</summary>
+public sealed class SummaryLineViewModel
+{
+    public string Text { get; }
+    public bool IsHigh { get; }
+    public bool IsMedium { get; }
+
+    public SummaryLineViewModel(string text, ContextSeverity severity)
+    {
+        Text = text;
+        IsHigh = severity == ContextSeverity.High;
+        IsMedium = severity == ContextSeverity.Medium;
     }
 }
 
@@ -42,6 +103,17 @@ public sealed class BlueScreenItemViewModel
     {
         _e = e;
         Actions = e.Actions.Select(t => new QuickActionViewModel(t)).ToList();
+        ParamHint = StopCodeKnowledge.GetParamHint(e.StopCode, e.Parameters);
+        if (e.Parameters.Count > 0)
+        {
+            ParamsText = "参数: " + string.Join(", ", e.Parameters.Select(p => $"0x{p:X16}"));
+        }
+        DumpStateText = e.DumpPath is null
+            ? ""
+            : e.DumpFileExists
+                ? "转储文件已保留，可定位崩溃驱动 ✔"
+                : "⚠ 转储文件缺失（可能被清理），无法精确定位崩溃驱动";
+        DumpMissing = e.DumpPath is not null && !e.DumpFileExists;
     }
 
     public DateTime Time => _e.Time;
@@ -50,6 +122,10 @@ public sealed class BlueScreenItemViewModel
     public string Cause => _e.Cause;
     public string Advice => _e.Advice;
     public string? DumpPath => _e.DumpPath;
+    public string ParamsText { get; }
+    public string? ParamHint { get; }
+    public string DumpStateText { get; }
+    public bool DumpMissing { get; }
     public IReadOnlyList<QuickActionViewModel> Actions { get; }
 }
 

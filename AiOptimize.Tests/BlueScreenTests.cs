@@ -30,6 +30,34 @@ public class BlueScreenParserTests
     [Fact]
     public void TryParse_NoStopCode_ReturnsFalse()
         => Assert.False(BlueScreenMessageParser.TryParse("没有代码的消息", out _, out _));
+
+    [Fact]
+    public void TryParse_Real3BMessage_ExtractsParams()
+    {
+        const string msg =
+            "计算机已经从检测错误后重新启动。检测错误: 0x0000003b (0x00000000c0000005, 0xfffff80093341b7e, 0xffff980d3942eb00, 0x0000000000000000)。已将转储的数据保存在: C:\\WINDOWS\\Minidump\\081126-12343-01.dmp。报告 ID: abc。";
+
+        var ok = BlueScreenMessageParser.TryParse(msg, out uint code, out IReadOnlyList<ulong> parameters, out string? dumpPath);
+
+        Assert.True(ok);
+        Assert.Equal(0x3Bu, code);
+        Assert.Equal(4, parameters.Count);
+        Assert.Equal(0xC0000005u, parameters[0]);       // 64 位参数保留完整
+        Assert.Equal(0xFFFFF80093341B7Eu, parameters[1]);
+        Assert.Equal("C:\\WINDOWS\\Minidump\\081126-12343-01.dmp", dumpPath);
+    }
+
+    [Fact]
+    public void TryParse_ParamsBeyond64BitWidth_AreCapturedAsUlong()
+    {
+        var ok = BlueScreenMessageParser.TryParse(
+            "检测错误: 0x00000050 (0xfffffffffffffff8, 0x0000000000000001, 0xfffff80000000000, 0x0000000000000002)。",
+            out uint code, out IReadOnlyList<ulong> parameters, out _);
+
+        Assert.True(ok);
+        Assert.Equal(0x50u, code);
+        Assert.Equal(0xFFFFFFFFFFFFFFF8u, parameters[0]); // 超过 uint 范围不溢出
+    }
 }
 
 public class StopCodeKnowledgeTests
@@ -83,4 +111,31 @@ public class StopCodeKnowledgeTests
         Assert.NotEmpty(info.Advice);
         Assert.NotEmpty(info.Actions);
     }
+
+    [Fact]
+    public void GetParamHint_3BWithAccessViolation_ReturnsExactHint()
+    {
+        var hint = StopCodeKnowledge.GetParamHint(0x3B, new ulong[] { 0xC0000005, 0xFFFFF80093341B7E });
+
+        Assert.NotNull(hint);
+        Assert.Contains("0xC0000005", hint);
+        Assert.Contains("虚拟显示驱动", hint);
+    }
+
+    [Fact]
+    public void GetParamHint_KnownCodeWithoutExactParam_ReturnsGenericHint()
+    {
+        var hint = StopCodeKnowledge.GetParamHint(0x3B, new ulong[] { 0x00000001 });
+
+        Assert.NotNull(hint);
+        Assert.Contains("参数1", hint);
+    }
+
+    [Fact]
+    public void GetParamHint_NoParams_ReturnsNull()
+        => Assert.Null(StopCodeKnowledge.GetParamHint(0x3B, Array.Empty<ulong>()));
+
+    [Fact]
+    public void GetParamHint_UnknownCode_ReturnsNull()
+        => Assert.Null(StopCodeKnowledge.GetParamHint(0xDEADBEEF, new ulong[] { 0x1 }));
 }

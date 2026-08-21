@@ -1,4 +1,5 @@
 using System.Diagnostics.Eventing.Reader;
+using System.IO;
 using AiOptimize.Models;
 
 namespace AiOptimize.Services;
@@ -27,8 +28,9 @@ public sealed class BlueScreenAnalyzer
                     try
                     {
                         string message = record.FormatDescription() ?? "";
-                        if (!BlueScreenMessageParser.TryParse(message, out uint code, out string? dumpPath)) continue;
+                        if (!BlueScreenMessageParser.TryParse(message, out uint code, out var parameters, out string? dumpPath)) continue;
                         var info = StopCodeKnowledge.Lookup(code);
+                        bool dumpExists = dumpPath is not null && File.Exists(dumpPath);
                         events.Add(new BlueScreenEvent(
                             record.TimeCreated ?? DateTime.MinValue,
                             code,
@@ -37,6 +39,8 @@ public sealed class BlueScreenAnalyzer
                             info.Cause,
                             info.Advice,
                             dumpPath,
+                            dumpExists,
+                            parameters,
                             info.Actions));
                     }
                     catch { /* 单条解析失败跳过 */ }

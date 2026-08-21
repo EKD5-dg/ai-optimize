@@ -11,4 +11,6 @@ public sealed record BlueScreenEvent(
     string Cause,
     string Advice,
     string? DumpPath,
+    bool DumpFileExists,
+    IReadOnlyList<ulong> Parameters,
     IReadOnlyList<QuickActionType> Actions);

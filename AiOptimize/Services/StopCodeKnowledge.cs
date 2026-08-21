@@ -97,4 +97,38 @@ public static class StopCodeKnowledge
 
     public static StopCodeInfo Lookup(uint stopCode)
         => Map.TryGetValue(stopCode, out var info) ? info : Generic;
+
+    // 按 (停止代码, 参数1低32位) 的精准参数解读
+    private static readonly Dictionary<(uint Code, uint Param1), string> ParamMap = new()
+    {
+        [(0x3B, 0xC0000005)] = "参数1 = 0xC0000005（内存访问冲突）：出错代码试图访问无权访问的内存，通常是驱动 bug。优先更新显卡驱动、禁用虚拟显示驱动（向日葵/MuMu 等模拟器与远程软件）；无效再查内存条。",
+        [(0x1E, 0xC0000005)] = "参数1 = 0xC0000005（访问冲突）：异常发生在访问无效内存地址时，多为驱动缺陷，可优先排查显卡与虚拟显示驱动。",
+        [(0x7E, 0xC0000005)] = "参数1 = 0xC0000005（访问冲突）：系统线程访问了无效内存，多为驱动缺陷。",
+        [(0x7F, 0x00000008)] = "参数1 = 0x8（双重错误）：CPU 在异常处理过程中再次出错，常见于 CPU 过热、超频或主板问题。",
+        [(0x139, 0x00000003)] = "参数1 = 0x3（链表损坏）：内核数据结构被破坏，多为驱动缺陷或内存故障。",
+        [(0x124, 0x00000000)] = "参数1 = 0x0：CPU 内部错误，常见于过热、超频或电源不稳定。",
+        [(0x124, 0x00000001)] = "参数1 = 0x1：内存控制器报告错误，优先运行内存诊断并检查内存条。",
+    };
+
+    // 按停止代码的通用参数说明（未命中精准组合时兜底）
+    private static readonly Dictionary<uint, string> ParamGeneric = new()
+    {
+        [0x3B] = "参数1 是异常代码（0xC0000005 = 内存访问冲突，最常见），参数2 是出错指令的地址，参数3 是异常上下文记录地址。",
+        [0x1E] = "参数1 是异常代码（0xC0000005 = 访问冲突），参数2 是出错的指令地址，参数3 是上下文记录地址。",
+        [0x50] = "参数1 是被访问的错误内存地址；参数2 表示操作类型（0=读取、1=写入、8=执行）。写入/执行类错误更偏向驱动 bug，纯读取错误也可能是内存条故障。",
+        [0x7F] = "参数1 是陷阱号（0=除零、8=双重错误、D=页错误），参数2 是陷阱地址。",
+        [0xD1] = "参数1 是被访问的内存地址，参数2 是操作类型（0=读取、1=写入、8=执行），参数3 是发起访问的指令地址。",
+        [0x116] = "参数1 是显卡无响应的秒数（超过 2 秒即触发），参数2 是卡住位置的驱动内部地址。",
+        [0x9F] = "参数1 表示电源状态转换类型（3=睡眠），参数2/3 标识卡住的设备或驱动。",
+        [0x34] = "参数1 是错误状态码，参数2/3/4 与缓存管理器内部状态相关；若 0xC0000420 出现，多与磁盘写入失败有关。",
+    };
+
+    /// <summary>根据崩溃参数生成解读；无参数或未命中时返回 null。</summary>
+    public static string? GetParamHint(uint stopCode, IReadOnlyList<ulong> parameters)
+    {
+        if (parameters.Count == 0) return null;
+        uint p1 = (uint)(parameters[0] & 0xFFFFFFFF);
+        if (ParamMap.TryGetValue((stopCode, p1), out var exact)) return exact;
+        return ParamGeneric.TryGetValue(stopCode, out var generic) ? generic : null;
+    }
 }
