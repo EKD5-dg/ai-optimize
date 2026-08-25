@@ -264,6 +264,24 @@
                                 Style="{StaticResource AccentButton}" Click="OnBigFilesClick"/>
                     </Grid>
                 </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="30,0,12,0">
+                            <TextBlock Text="C盘清理" FontSize="15" FontWeight="SemiBold"/>
+                            <TextBlock Text="一键清理传递优化缓存、休眠文件等 C 盘空间大户" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding CDriveSummaryText}"
+                                   Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <Button Grid.Column="2" Content="一键清理" Width="88" Height="34"
+                                Style="{StaticResource AccentButton}" Click="OnCDriveCleanClick"/>
+                    </Grid>
+                </Border>
             </StackPanel>
         </ScrollViewer>
 

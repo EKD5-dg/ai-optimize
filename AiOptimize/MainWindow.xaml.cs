@@ -70,6 +70,12 @@ public partial class MainWindow : Window
         window.ShowDialog();
     }
 
+    private void OnCDriveCleanClick(object sender, RoutedEventArgs e)
+    {
+        var window = new CDriveCleanWindow { Owner = this };
+        window.ShowDialog();
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         _viewModel.Shutdown();

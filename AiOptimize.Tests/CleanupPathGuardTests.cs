@@ -29,6 +29,10 @@ public class CleanupPathGuardTests
         Path.Combine(LocalAppData, "Microsoft", "Edge", "User Data"),// Edge 缓存
         Path.Combine(LocalAppData, @"Microsoft\Windows\Explorer"),   // 缩略图缓存
         Path.Combine(ProgramData, @"Microsoft\Windows\WER"),         // 错误报告
+        Path.Combine(WindowsDir, @"ServiceProfiles\NetworkService\AppData\Local\Microsoft\Windows\DeliveryOptimization"),
+        Path.Combine(LocalAppData, "CrashDumps"),                    // 程序崩溃转储
+        Path.Combine(WindowsDir, "LiveKernelReports"),               // 内核实时转储
+        Path.Combine(Path.GetPathRoot(WindowsDir) ?? @"C:\", "Windows.old"), // 旧系统备份
     };
 
     /// <summary>清理目标绝不能触碰的用户数据目录。</summary>
@@ -46,6 +50,7 @@ public class CleanupPathGuardTests
     {
         foreach (var dir in TempFileCleaner.GetCleanupTargets()) yield return dir;
         foreach (var dir in DeepCleaner.GetSystemCleanupDirs()) yield return dir;
+        foreach (var dir in CDriveCleaner.GetCleanupTargets()) yield return dir;
     }
 
     [Fact]

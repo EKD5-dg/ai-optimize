@@ -1,3 +1,4 @@
+using System.IO;
 using System.Reflection;
 using System.Windows;
 using AiOptimize.Models;
@@ -74,6 +75,9 @@ public sealed class MainViewModel : ViewModelBase
     private string _blueScreenText = "扫描中…";
     public string BlueScreenText { get => _blueScreenText; set => SetProperty(ref _blueScreenText, value); }
 
+    private string _cDriveSummaryText = "";
+    public string CDriveSummaryText { get => _cDriveSummaryText; set => SetProperty(ref _cDriveSummaryText, value); }
+
     private bool _isOptimizing;
     public bool IsOptimizing
     {
@@ -131,7 +135,16 @@ public sealed class MainViewModel : ViewModelBase
             MemoryText = $"{ByteFormatter.Format((double)snapshot.MemoryUsedBytes)} / {ByteFormatter.Format((double)snapshot.MemoryTotalBytes)}";
             MemoryInfoText = $"当前使用率 {snapshot.MemoryUsage:0.#}%";
             Disks = snapshot.Disks;
+            UpdateCDriveSummary(snapshot.Disks);
         });
+    }
+
+    /// <summary>C盘清理入口卡片的状态文本：显示系统盘剩余空间，随每秒快照自动刷新。</summary>
+    private void UpdateCDriveSummary(IReadOnlyList<DiskUsageInfo> disks)
+    {
+        string root = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows))?.TrimEnd('\\') ?? "C:";
+        var disk = disks.FirstOrDefault(d => string.Equals(d.Name, root, StringComparison.OrdinalIgnoreCase));
+        CDriveSummaryText = disk is null ? "" : $"C 盘剩余 {ByteFormatter.Format(disk.FreeBytes)}";
     }
 
     private async Task RefreshScanAsync()
