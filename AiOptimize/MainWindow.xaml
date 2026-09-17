@@ -190,7 +190,8 @@
                             <TextBlock Grid.Column="2" Text="{Binding MemoryInfoText}"
                                        Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
                             <ToggleButton Grid.Column="3" x:Name="MemoryDetailToggle" Content="明细"
-                                          Style="{StaticResource LinkToggle}" Margin="14,0,0,0"/>
+                                          Style="{StaticResource LinkToggle}" Margin="14,0,0,0"
+                                          Checked="OnMemoryDetailChecked" Unchecked="OnMemoryDetailUnchecked"/>
                         </Grid>
                         <StackPanel Margin="30,10,4,0"
                                     Visibility="{Binding IsChecked, ElementName=MemoryDetailToggle, Converter={StaticResource BoolToVis}}">

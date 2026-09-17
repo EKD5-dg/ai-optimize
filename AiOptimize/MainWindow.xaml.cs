@@ -58,6 +58,22 @@ public partial class MainWindow : Window
         window.ShowDialog();
     }
 
+    private System.Windows.Threading.DispatcherTimer? _memoryDetailTimer;
+
+    /// <summary>内存明细展开时立即刷新一次，并启动每分钟续刷；只在展开期间刷新，收起即停。</summary>
+    private void OnMemoryDetailChecked(object sender, RoutedEventArgs e)
+    {
+        _ = _viewModel.RefreshMemoryDetailsAsync();
+        if (_memoryDetailTimer is null)
+        {
+            _memoryDetailTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
+            _memoryDetailTimer.Tick += (_, _) => _ = _viewModel.RefreshMemoryDetailsAsync();
+        }
+        _memoryDetailTimer.Start();
+    }
+
+    private void OnMemoryDetailUnchecked(object sender, RoutedEventArgs e) => _memoryDetailTimer?.Stop();
+
     private void OnHelpClick(object sender, RoutedEventArgs e)
     {
         var window = new HelpWindow { Owner = this };
@@ -78,6 +94,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _memoryDetailTimer?.Stop();
         _viewModel.Shutdown();
         base.OnClosed(e);
     }

@@ -126,6 +126,13 @@ public sealed class MainViewModel : ViewModelBase
         catch { StartupCountText = "读取失败"; }
     }
 
+    /// <summary>重扫最占内存的程序明细。明细面板展开瞬间调用一次，展开期间由定时器每分钟续刷。</summary>
+    public async Task RefreshMemoryDetailsAsync()
+    {
+        try { MemoryDetails = await _memoryOptimizer.ScanDetailsAsync(); }
+        catch { /* 扫描失败时保留旧列表 */ }
+    }
+
     private void OnSnapshot(SystemSnapshot snapshot)
     {
         Application.Current?.Dispatcher.BeginInvoke(() =>
