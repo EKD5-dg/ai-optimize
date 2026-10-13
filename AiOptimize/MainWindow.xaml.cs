@@ -74,6 +74,22 @@ public partial class MainWindow : Window
 
     private void OnMemoryDetailUnchecked(object sender, RoutedEventArgs e) => _memoryDetailTimer?.Stop();
 
+    private System.Windows.Threading.DispatcherTimer? _cpuDetailTimer;
+
+    /// <summary>CPU 明细展开时立即刷新一次，展开期间每 5 秒续刷（单次采样约 0.8 秒，比内存刷得勤）；收起即停。</summary>
+    private void OnCpuDetailChecked(object sender, RoutedEventArgs e)
+    {
+        _ = _viewModel.RefreshCpuDetailsAsync();
+        if (_cpuDetailTimer is null)
+        {
+            _cpuDetailTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            _cpuDetailTimer.Tick += (_, _) => _ = _viewModel.RefreshCpuDetailsAsync();
+        }
+        _cpuDetailTimer.Start();
+    }
+
+    private void OnCpuDetailUnchecked(object sender, RoutedEventArgs e) => _cpuDetailTimer?.Stop();
+
     private void OnHelpClick(object sender, RoutedEventArgs e)
     {
         var window = new HelpWindow { Owner = this };
@@ -95,6 +111,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _memoryDetailTimer?.Stop();
+        _cpuDetailTimer?.Stop();
         _viewModel.Shutdown();
         base.OnClosed(e);
     }

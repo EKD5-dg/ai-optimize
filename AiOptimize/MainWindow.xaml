@@ -40,12 +40,37 @@
 
             <Border Style="{StaticResource Card}" Margin="0,0,12,0">
                 <StackPanel>
-                    <TextBlock Text="CPU 使用率" Foreground="{StaticResource SubTextBrush}"/>
+                    <Grid>
+                        <TextBlock Text="CPU 使用率" Foreground="{StaticResource SubTextBrush}"/>
+                        <ToggleButton x:Name="CpuDetailToggle" Content="明细" HorizontalAlignment="Right"
+                                      Style="{StaticResource LinkToggle}"
+                                      Checked="OnCpuDetailChecked" Unchecked="OnCpuDetailUnchecked"/>
+                    </Grid>
                     <Grid Width="120" Height="120" Margin="0,14,0,0">
                         <controls:RingProgress Value="{Binding CpuUsage}" RingBrush="{StaticResource AccentBrush}"/>
                         <TextBlock Text="{Binding CpuUsage, StringFormat={}{0:0}%}" FontSize="24" FontWeight="Bold"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
+                    <StackPanel Margin="0,12,0,0"
+                                Visibility="{Binding IsChecked, ElementName=CpuDetailToggle, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="当前最占 CPU 的程序（约 1 秒采样）：" Foreground="{StaticResource SubTextBrush}"
+                                   FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                        <ItemsControl ItemsSource="{Binding CpuDetails}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,3">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Name}" Foreground="{StaticResource SubTextBrush}" FontSize="11"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Usage, StringFormat={}{0:0.0}%}"
+                                                   Foreground="{StaticResource SubTextBrush}" FontSize="11"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

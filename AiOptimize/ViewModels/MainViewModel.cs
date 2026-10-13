@@ -17,6 +17,7 @@ public sealed class MainViewModel : ViewModelBase
     private readonly TempFileCleaner _tempCleaner = new();
     private readonly DeepCleaner _deepCleaner = new();
     private readonly MemoryOptimizer _memoryOptimizer = new();
+    private readonly CpuUsageScanner _cpuScanner = new();
     private readonly StartupManager _startupManager = new();
     private readonly BlueScreenAnalyzer _blueScreenAnalyzer = new();
 
@@ -68,6 +69,9 @@ public sealed class MainViewModel : ViewModelBase
 
     private string _memoryInfoText = "";
     public string MemoryInfoText { get => _memoryInfoText; set => SetProperty(ref _memoryInfoText, value); }
+
+    private IReadOnlyList<CpuProcessItem> _cpuDetails = Array.Empty<CpuProcessItem>();
+    public IReadOnlyList<CpuProcessItem> CpuDetails { get => _cpuDetails; set => SetProperty(ref _cpuDetails, value); }
 
     private string _startupCountText = "扫描中…";
     public string StartupCountText { get => _startupCountText; set => SetProperty(ref _startupCountText, value); }
@@ -130,6 +134,13 @@ public sealed class MainViewModel : ViewModelBase
     public async Task RefreshMemoryDetailsAsync()
     {
         try { MemoryDetails = await _memoryOptimizer.ScanDetailsAsync(); }
+        catch { /* 扫描失败时保留旧列表 */ }
+    }
+
+    /// <summary>重扫最占 CPU 的程序明细。明细面板展开瞬间调用一次，展开期间由定时器续刷（CPU 波动快，刷新比内存密）。</summary>
+    public async Task RefreshCpuDetailsAsync()
+    {
+        try { CpuDetails = await _cpuScanner.ScanDetailsAsync(); }
         catch { /* 扫描失败时保留旧列表 */ }
     }
 
