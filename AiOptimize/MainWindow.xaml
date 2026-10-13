@@ -62,10 +62,16 @@
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding Name}" Foreground="{StaticResource SubTextBrush}" FontSize="11"/>
+                                        <TextBlock Text="{Binding Name}" Foreground="{StaticResource SubTextBrush}" FontSize="11"
+                                                   VerticalAlignment="Center"/>
                                         <TextBlock Grid.Column="1" Text="{Binding Usage, StringFormat={}{0:0.0}%}"
-                                                   Foreground="{StaticResource SubTextBrush}" FontSize="11"/>
+                                                   Foreground="{StaticResource SubTextBrush}" FontSize="11"
+                                                   VerticalAlignment="Center" Margin="8,0"/>
+                                        <Button Grid.Column="2" Content="结束" Style="{StaticResource LinkButton}"
+                                                FontSize="11" Padding="0" VerticalAlignment="Center"
+                                                Click="OnEndCpuProcessClick"/>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -237,6 +243,31 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,4">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox IsChecked="{Binding IsCpuCoolSelected}" IsEnabled="{Binding IsNotOptimizing}" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Margin="12,0">
+                                <TextBlock Text="CPU 降温" FontSize="15" FontWeight="SemiBold"/>
+                                <TextBlock Text="结束无窗口的高占用后台进程；有窗口的程序只降速不关闭" Foreground="{StaticResource SubTextBrush}" FontSize="12"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="占用超 50% 才处理" Foreground="{StaticResource SubTextBrush}"
+                                       FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <ToggleButton Grid.Column="3" x:Name="CpuCoolDetailToggle" Content="说明" HorizontalAlignment="Right"
+                                          Style="{StaticResource LinkToggle}" Margin="14,0,0,0"/>
+                        </Grid>
+                        <TextBlock Margin="30,8,4,0" Foreground="{StaticResource SubTextBrush}" FontSize="12" TextWrapping="Wrap"
+                                   Visibility="{Binding IsChecked, ElementName=CpuCoolDetailToggle, Converter={StaticResource BoolToVis}}"
+                                   Text="「降温」不会动你正在用的窗口程序：无可见窗口的后台进程（如卡住的更新器、索引服务）占用超过总 CPU 的 50% 时会被结束；有窗口的高占用程序只临时降低优先级（切回前台或重启后恢复正常）。也可在 CPU 卡片「明细」里手动结束指定进程。"/>
                     </StackPanel>
                 </Border>
 

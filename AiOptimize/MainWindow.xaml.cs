@@ -90,6 +90,22 @@ public partial class MainWindow : Window
 
     private void OnCpuDetailUnchecked(object sender, RoutedEventArgs e) => _cpuDetailTimer?.Stop();
 
+    /// <summary>明细列表「结束」：确认后结束该行全部同名进程，完成即刷新列表。</summary>
+    private async void OnEndCpuProcessClick(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not AiOptimize.Models.CpuProcessItem item) return;
+        var confirm = MessageBox.Show(this,
+            $"确定结束「{item.Name}」的 {item.Pids.Count} 个进程吗？\n未保存的数据可能会丢失。",
+            "结束进程", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.OK) return;
+
+        int ended = await _viewModel.EndCpuProcessesAsync(item.Pids);
+        _viewModel.ResultText = ended == item.Pids.Count
+            ? $"已结束 {item.Name}"
+            : $"已结束 {ended}/{item.Pids.Count} 个进程（其余可能已退出或无权限）";
+        await _viewModel.RefreshCpuDetailsAsync();
+    }
+
     private void OnHelpClick(object sender, RoutedEventArgs e)
     {
         var window = new HelpWindow { Owner = this };

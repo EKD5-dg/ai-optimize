@@ -52,6 +52,10 @@ public sealed class MainViewModel : ViewModelBase
     private bool _isMemorySelected = true;
     public bool IsMemorySelected { get => _isMemorySelected; set => SetProperty(ref _isMemorySelected, value); }
 
+    /// <summary>CPU 降温默认不勾选：会结束/降速其他程序，应由用户主动选择。</summary>
+    private bool _isCpuCoolSelected;
+    public bool IsCpuCoolSelected { get => _isCpuCoolSelected; set => SetProperty(ref _isCpuCoolSelected, value); }
+
     private string _tempScanText = "扫描中…";
     public string TempScanText { get => _tempScanText; set => SetProperty(ref _tempScanText, value); }
 
@@ -114,7 +118,7 @@ public sealed class MainViewModel : ViewModelBase
     {
         OptimizeCommand = new AsyncRelayCommand(
             async _ => await OptimizeAsync(),
-            _ => !IsOptimizing && (IsTempSelected || IsDeepSelected || IsMemorySelected),
+            _ => !IsOptimizing && (IsTempSelected || IsDeepSelected || IsMemorySelected || IsCpuCoolSelected),
             ex => ResultText = $"优化过程中出现问题：{ex.Message}");
 
         _monitor.SnapshotUpdated += OnSnapshot;
@@ -143,6 +147,10 @@ public sealed class MainViewModel : ViewModelBase
         try { CpuDetails = await _cpuScanner.ScanDetailsAsync(); }
         catch { /* 扫描失败时保留旧列表 */ }
     }
+
+    /// <summary>结束明细列表中选中的一组进程（同名合并项会结束全部实例）。返回实际结束的个数。</summary>
+    public Task<int> EndCpuProcessesAsync(IReadOnlyList<int> pids) => Task.Run(() =>
+        pids.Count(pid => CpuUsageScanner.EndProcess(pid)));
 
     private void OnSnapshot(SystemSnapshot snapshot)
     {
@@ -209,8 +217,8 @@ public sealed class MainViewModel : ViewModelBase
         var summary = new List<string>();
         var total = new CleanResult();
         // 快照选择状态：优化过程中复选框已禁用，但防御性快照避免中途变化导致进度计算错误
-        bool doTemp = IsTempSelected, doDeep = IsDeepSelected, doMemory = IsMemorySelected;
-        int steps = (doTemp ? 1 : 0) + (doDeep ? 1 : 0) + (doMemory ? 1 : 0);
+        bool doTemp = IsTempSelected, doDeep = IsDeepSelected, doMemory = IsMemorySelected, doCpuCool = IsCpuCoolSelected;
+        int steps = (doTemp ? 1 : 0) + (doDeep ? 1 : 0) + (doMemory ? 1 : 0) + (doCpuCool ? 1 : 0);
         if (steps == 0) { IsOptimizing = false; return; }
         int done = 0;
 
@@ -239,6 +247,24 @@ public sealed class MainViewModel : ViewModelBase
                 var mem = await _memoryOptimizer.OptimizeAsync();
                 ProgressValue = ++done * 100.0 / steps;
                 summary.Add($"内存使用率 {mem.BeforeUsage:0.#}% → {mem.AfterUsage:0.#}%");
+            }
+
+            if (doCpuCool)
+            {
+                ProgressText = "正在为 CPU 降温…";
+                var cool = await _cpuScanner.CoolAsync();
+                ProgressValue = ++done * 100.0 / steps;
+                if (cool.Killed > 0 || cool.Demoted > 0)
+                {
+                    var parts = new List<string>();
+                    if (cool.Killed > 0) parts.Add($"结束 {cool.Killed} 个高占用后台进程");
+                    if (cool.Demoted > 0) parts.Add($"{cool.Demoted} 个程序已降速");
+                    summary.Add("CPU 降温：" + string.Join("，", parts));
+                }
+                else
+                {
+                    summary.Add("CPU 降温：没有发现需要处理的高占用程序");
+                }
             }
 
             if (total.FilesSkipped > 0)
