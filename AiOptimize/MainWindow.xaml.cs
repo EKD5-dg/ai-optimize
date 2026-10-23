@@ -1,5 +1,6 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Windows;
+using System.Windows.Threading;
 using AiOptimize.Services;
 using AiOptimize.ViewModels;
 using AiOptimize.Views;
@@ -14,6 +15,13 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = _viewModel;
+    }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        // 纯展示窗口：拦掉搜狗等 IME 注入的 64Hz UI 定时器，避免空转耗 CPU
+        ImeTimerGuard.Install();
     }
 
     protected override async void OnContentRendered(EventArgs e)
@@ -47,9 +55,17 @@ public partial class MainWindow : Window
 
     private void OnManageStartupClick(object sender, RoutedEventArgs e)
     {
-        var window = new StartupManagerWindow { Owner = this };
-        window.ShowDialog();
-        _viewModel.RefreshStartupCount();
+        ImeTimerGuard.Suspend(); // 该窗口有搜索框，需要保留中文输入
+        try
+        {
+            var window = new StartupManagerWindow { Owner = this };
+            window.ShowDialog();
+            _viewModel.RefreshStartupCount();
+        }
+        finally
+        {
+            ImeTimerGuard.Resume();
+        }
     }
 
     private void OnBlueScreenClick(object sender, RoutedEventArgs e)
@@ -58,37 +74,70 @@ public partial class MainWindow : Window
         window.ShowDialog();
     }
 
-    private System.Windows.Threading.DispatcherTimer? _memoryDetailTimer;
+    private DispatcherTimer? _memoryDetailTimer;
+    private DispatcherTimer? _cpuDetailTimer;
 
     /// <summary>内存明细展开时立即刷新一次，并启动每分钟续刷；只在展开期间刷新，收起即停。</summary>
     private void OnMemoryDetailChecked(object sender, RoutedEventArgs e)
     {
         _ = _viewModel.RefreshMemoryDetailsAsync();
-        if (_memoryDetailTimer is null)
-        {
-            _memoryDetailTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
-            _memoryDetailTimer.Tick += (_, _) => _ = _viewModel.RefreshMemoryDetailsAsync();
-        }
-        _memoryDetailTimer.Start();
+        _memoryDetailTimer ??= CreateRefreshTimer(TimeSpan.FromSeconds(60), _viewModel.RefreshMemoryDetailsAsync);
+        if (WindowState != WindowState.Minimized) _memoryDetailTimer.Start();
     }
 
     private void OnMemoryDetailUnchecked(object sender, RoutedEventArgs e) => _memoryDetailTimer?.Stop();
 
-    private System.Windows.Threading.DispatcherTimer? _cpuDetailTimer;
-
-    /// <summary>CPU 明细展开时立即刷新一次，展开期间每 5 秒续刷（单次采样约 0.8 秒，比内存刷得勤）；收起即停。</summary>
+    /// <summary>CPU 明细展开时立即刷新一次，展开期间每 5 秒续刷；收起即停。</summary>
     private void OnCpuDetailChecked(object sender, RoutedEventArgs e)
     {
         _ = _viewModel.RefreshCpuDetailsAsync();
-        if (_cpuDetailTimer is null)
-        {
-            _cpuDetailTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
-            _cpuDetailTimer.Tick += (_, _) => _ = _viewModel.RefreshCpuDetailsAsync();
-        }
-        _cpuDetailTimer.Start();
+        _cpuDetailTimer ??= CreateRefreshTimer(TimeSpan.FromSeconds(5), _viewModel.RefreshCpuDetailsAsync);
+        if (WindowState != WindowState.Minimized) _cpuDetailTimer.Start();
     }
 
     private void OnCpuDetailUnchecked(object sender, RoutedEventArgs e) => _cpuDetailTimer?.Stop();
+
+    /// <summary>定时刷新：窗口不可见或最小化时跳过，避免在后台白跑进程枚举。</summary>
+    private DispatcherTimer CreateRefreshTimer(TimeSpan interval, Func<Task> refresh)
+    {
+        var timer = new DispatcherTimer { Interval = interval };
+        timer.Tick += (_, _) =>
+        {
+            if (!IsVisible || WindowState == WindowState.Minimized) return;
+            _ = refresh();
+        };
+        return timer;
+    }
+
+    protected override void OnStateChanged(EventArgs e)
+    {
+        base.OnStateChanged(e);
+        if (WindowState == WindowState.Minimized) PauseLiveUpdates();
+        else ResumeLiveUpdates();
+    }
+
+    /// <summary>最小化后暂停每秒监控与明细刷新，恢复窗口时立即补一次数据。</summary>
+    private void PauseLiveUpdates()
+    {
+        _viewModel.PauseMonitoring();
+        _cpuDetailTimer?.Stop();
+        _memoryDetailTimer?.Stop();
+    }
+
+    private void ResumeLiveUpdates()
+    {
+        _viewModel.ResumeMonitoring();
+        if (CpuDetailToggle.IsChecked == true)
+        {
+            _cpuDetailTimer?.Start();
+            _ = _viewModel.RefreshCpuDetailsAsync();
+        }
+        if (MemoryDetailToggle.IsChecked == true)
+        {
+            _memoryDetailTimer?.Start();
+            _ = _viewModel.RefreshMemoryDetailsAsync();
+        }
+    }
 
     /// <summary>明细列表「结束」：确认后结束该行全部同名进程，完成即刷新列表。</summary>
     private async void OnEndCpuProcessClick(object sender, RoutedEventArgs e)

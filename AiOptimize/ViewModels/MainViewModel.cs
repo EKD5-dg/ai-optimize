@@ -112,6 +112,9 @@ public sealed class MainViewModel : ViewModelBase
     private string _resultText = "";
     public string ResultText { get => _resultText; set => SetProperty(ref _resultText, value); }
 
+    private int _memoryRefreshRunning;
+    private int _cpuRefreshRunning;
+
     public AsyncRelayCommand OptimizeCommand { get; }
 
     public MainViewModel()
@@ -128,6 +131,11 @@ public sealed class MainViewModel : ViewModelBase
 
     public void Shutdown() => _monitor.Dispose();
 
+    /// <summary>窗口最小化时暂停每秒采集，恢复窗口后继续。</summary>
+    public void PauseMonitoring() => _monitor.Pause();
+
+    public void ResumeMonitoring() => _monitor.Resume();
+
     public void RefreshStartupCount()
     {
         try { StartupCountText = $"{_startupManager.GetItems().Count} 个自启动项"; }
@@ -137,15 +145,19 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>重扫最占内存的程序明细。明细面板展开瞬间调用一次，展开期间由定时器每分钟续刷。</summary>
     public async Task RefreshMemoryDetailsAsync()
     {
+        if (Interlocked.Exchange(ref _memoryRefreshRunning, 1) == 1) return;
         try { MemoryDetails = await _memoryOptimizer.ScanDetailsAsync(); }
         catch { /* 扫描失败时保留旧列表 */ }
+        finally { Interlocked.Exchange(ref _memoryRefreshRunning, 0); }
     }
 
     /// <summary>重扫最占 CPU 的程序明细。明细面板展开瞬间调用一次，展开期间由定时器续刷（CPU 波动快，刷新比内存密）。</summary>
     public async Task RefreshCpuDetailsAsync()
     {
+        if (Interlocked.Exchange(ref _cpuRefreshRunning, 1) == 1) return; // 上一次采样未结束时跳过，避免叠加扫描
         try { CpuDetails = await _cpuScanner.ScanDetailsAsync(); }
         catch { /* 扫描失败时保留旧列表 */ }
+        finally { Interlocked.Exchange(ref _cpuRefreshRunning, 0); }
     }
 
     /// <summary>结束明细列表中选中的一组进程（同名合并项会结束全部实例）。返回实际结束的个数。</summary>

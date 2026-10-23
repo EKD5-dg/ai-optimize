@@ -7,7 +7,9 @@
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BgBrush}"
         Foreground="{StaticResource TextBrush}"
-        FontFamily="Microsoft YaHei UI">
+        FontFamily="Microsoft YaHei UI"
+        InputMethod.IsInputMethodEnabled="False">
+    <!-- 纯展示窗口没有输入控件：禁用输入法，并由 ImeTimerGuard 拦掉 IME 注入的 64Hz 空转定时器 -->
     <Grid Margin="24,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -53,7 +55,7 @@
                     </Grid>
                     <StackPanel Margin="0,12,0,0"
                                 Visibility="{Binding IsChecked, ElementName=CpuDetailToggle, Converter={StaticResource BoolToVis}}">
-                        <TextBlock Text="当前最占 CPU 的程序（约 1 秒采样）：" Foreground="{StaticResource SubTextBrush}"
+                        <TextBlock Text="当前最占 CPU 的程序（每 5 秒刷新）：" Foreground="{StaticResource SubTextBrush}"
                                    FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4"/>
                         <ItemsControl ItemsSource="{Binding CpuDetails}">
                             <ItemsControl.ItemTemplate>

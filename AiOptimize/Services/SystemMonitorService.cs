@@ -11,10 +11,16 @@ public sealed class SystemMonitorService : IDisposable
     private readonly PerformanceCounter _cpuCounter = new("Processor", "% Processor Time", "_Total");
     private readonly CancellationTokenSource _cts = new();
     private Task? _runTask;
+    private volatile bool _paused;
 
     public event Action<SystemSnapshot>? SnapshotUpdated;
 
     public void Start() => _runTask = RunAsync(_cts.Token);
+
+    /// <summary>暂停采集：窗口最小化时不再每秒刷新 UI。恢复后下一次 tick 自动继续。</summary>
+    public void Pause() => _paused = true;
+
+    public void Resume() => _paused = false;
 
     private async Task RunAsync(CancellationToken token)
     {
@@ -23,6 +29,8 @@ public sealed class SystemMonitorService : IDisposable
         {
             while (await timer.WaitForNextTickAsync(token))
             {
+                if (_paused) continue;
+
                 SystemSnapshot snapshot;
                 try { snapshot = Capture(); }
                 catch (Exception ex)
